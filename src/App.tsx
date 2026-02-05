@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useData } from './lib/DataProvider';
 import { Nav } from './components/Nav';
 import { StatsCards } from './components/StatsCards';
@@ -24,6 +24,24 @@ interface AttestationModalData {
   issuer?: { address: string; displayName: string | null } | null;
 }
 
+// Parse URL hash for deep linking
+function parseHash(): { view: string; agent?: string; fiber?: string } {
+  const hash = window.location.hash.slice(1); // Remove #
+  if (!hash) return { view: 'dashboard' };
+  
+  const parts = hash.split('/');
+  if (parts[0] === 'agent' && parts[1]) {
+    return { view: 'dashboard', agent: parts[1] };
+  }
+  if (parts[0] === 'fiber' && parts[1]) {
+    return { view: 'fibers', fiber: parts[1] };
+  }
+  if (['dashboard', 'fibers', 'identity', 'contracts'].includes(parts[0])) {
+    return { view: parts[0] };
+  }
+  return { view: 'dashboard' };
+}
+
 function App() {
   const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
@@ -34,9 +52,28 @@ function App() {
   const { data, isLoading, refresh, autoUpdate, setAutoUpdate } = useData();
   const currentStats = data.stats;
 
-  const handleAgentClick = (address: string) => {
-    setModalAgent(address);
+  // Update URL hash when view/modal changes
+  const updateHash = (newHash: string) => {
+    window.history.pushState(null, '', `#${newHash}`);
   };
+
+  // Declare handlers BEFORE useEffects that reference them
+  // Wrapped in useCallback to prevent unnecessary re-renders
+  const handleViewChange = useCallback((newView: typeof view) => {
+    setView(newView);
+    setSelectedFiber(null);
+    updateHash(newView);
+  }, []);
+
+  const handleAgentClick = useCallback((address: string) => {
+    setModalAgent(address);
+    updateHash(`agent/${address}`);
+  }, []);
+
+  const handleAgentClose = useCallback(() => {
+    setModalAgent(null);
+    updateHash(view);
+  }, [view]);
 
   const handleAttestationClick = (attestation: AttestationModalData) => {
     setModalAttestation(attestation);
@@ -45,11 +82,83 @@ function App() {
   const handleFiberSelect = (fiberId: string) => {
     setSelectedFiber(fiberId);
     setView('fibers');
+    updateHash(`fiber/${fiberId}`);
   };
+
+  // Handle URL hash changes for deep linking
+  useEffect(() => {
+    const handleHashChange = () => {
+      const parsed = parseHash();
+      if (parsed.agent) {
+        setModalAgent(parsed.agent);
+      }
+      if (parsed.fiber) {
+        setSelectedFiber(parsed.fiber);
+        setView('fibers');
+      }
+      if (parsed.view && !parsed.agent && !parsed.fiber) {
+        setView(parsed.view as typeof view);
+      }
+    };
+    
+    // Initial parse
+    handleHashChange();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      // Escape closes modals
+      if (e.key === 'Escape') {
+        if (modalAttestation) {
+          setModalAttestation(null);
+        } else if (modalAgent) {
+          handleAgentClose();
+        }
+        return;
+      }
+      
+      // Ctrl/Cmd + K opens search (handled by GlobalSearch)
+      // Number keys for navigation (when no modals open)
+      if (!modalAgent && !modalAttestation) {
+        switch (e.key) {
+          case '1':
+            handleViewChange('dashboard');
+            break;
+          case '2':
+            handleViewChange('fibers');
+            break;
+          case '3':
+            handleViewChange('identity');
+            break;
+          case '4':
+            handleViewChange('contracts');
+            break;
+          case 'r':
+            if (!e.metaKey && !e.ctrlKey) {
+              refresh();
+            }
+            break;
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalAgent, modalAttestation, refresh, handleAgentClose, handleViewChange]);
 
   return (
     <div className="min-h-screen pb-12">
-      <Nav view={view} setView={setView} onAgentSelect={setModalAgent} onFiberSelect={handleFiberSelect} />
+      <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} />
       
       <main className="container mx-auto px-6 pt-24 pb-16">
         {/* Live indicator with controls */}
@@ -100,6 +209,7 @@ function App() {
                   activity={data.activity} 
                   onAgentClick={handleAgentClick}
                   onAttestationClick={handleAttestationClick}
+                  onFiberClick={handleFiberSelect}
                 />
                 <TopAgents agents={data.leaderboard} onAgentClick={handleAgentClick} />
               </div>
@@ -132,7 +242,11 @@ function App() {
       {modalAgent && (
         <AgentModal 
           address={modalAgent} 
-          onClose={() => setModalAgent(null)} 
+          onClose={handleAgentClose}
+          onFiberClick={(fiberId) => {
+            handleAgentClose();
+            handleFiberSelect(fiberId);
+          }}
         />
       )}
 

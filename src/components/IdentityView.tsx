@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { exportToCSV, exportToJSON } from '../lib/export';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { AgentAvatar } from './AgentAvatar';
@@ -136,6 +137,14 @@ export function IdentityView() {
             <option value="CREATED_ASC">Oldest</option>
             <option value="NAME_ASC">Name A-Z</option>
           </select>
+          <div className="flex gap-2">
+            <button onClick={() => exportToCSV(agents, 'agents.csv')} className="btn-secondary text-xs">
+              📥 CSV
+            </button>
+            <button onClick={() => exportToJSON(agents, 'agents.json')} className="btn-secondary text-xs">
+              📥 JSON
+            </button>
+          </div>
         </div>
       </div>
 

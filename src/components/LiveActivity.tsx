@@ -15,9 +15,10 @@ interface LiveActivityProps {
   activity: ActivityEvent[];
   onAgentClick: (address: string) => void;
   onAttestationClick?: (attestation: AttestationModalData) => void;
+  onFiberClick?: (fiberId: string) => void;
 }
 
-export function LiveActivity({ activity, onAgentClick, onAttestationClick }: LiveActivityProps) {
+export function LiveActivity({ activity, onAgentClick, onAttestationClick, onFiberClick }: LiveActivityProps) {
   const getEventStyle = (eventType: string, action: string) => {
     if (action?.includes('complete') || eventType === 'CONTRACT_COMPLETED') {
       return { icon: '💰', bg: 'bg-green-500/20', border: 'border-green-500/30', label: 'Payment released' };
@@ -70,42 +71,58 @@ export function LiveActivity({ activity, onAgentClick, onAttestationClick }: Liv
             const agentLabel = event.agent 
               ? (event.agent.displayName || `${event.agent.address.slice(0, 12)}...`)
               : event.action || 'System event';
+            const fiberId = event.fiberId;
             
             return (
               <div
                 key={`${event.timestamp}-${index}`}
-                className={`p-3 rounded-lg border ${style.bg} ${style.border} ${event.agent ? 'cursor-pointer hover:brightness-110' : ''} transition-all`}
-                onClick={() => {
-                  if (!event.agent) return; // No agent to click
-                  if (event.eventType === 'ATTESTATION' && onAttestationClick) {
-                    // Create attestation data from activity event
-                    onAttestationClick({
-                      id: `${event.timestamp}-${index}`,
-                      type: event.action?.toUpperCase() || 'BEHAVIORAL',
-                      delta: event.reputationDelta || 0,
-                      reason: null,
-                      createdAt: event.timestamp,
-                      txHash: `tx_${event.timestamp.replace(/\D/g, '').slice(0, 16)}`,
-                      agent: event.agent,
-                      issuer: event.relatedAgent,
-                    });
-                  } else {
-                    onAgentClick(event.agent.address);
-                  }
-                }}
+                className={`p-3 rounded-lg border ${style.bg} ${style.border} transition-all`}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-xl">{style.icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm">{style.label}</div>
                     <div className="text-xs text-[var(--text-muted)] truncate">
-                      {agentLabel}
+                      {event.agent ? (
+                        <button 
+                          onClick={() => {
+                            if (event.eventType === 'ATTESTATION' && onAttestationClick) {
+                              onAttestationClick({
+                                id: `${event.timestamp}-${index}`,
+                                type: event.action?.toUpperCase() || 'BEHAVIORAL',
+                                delta: event.reputationDelta || 0,
+                                reason: null,
+                                createdAt: event.timestamp,
+                                txHash: `tx_${event.timestamp.replace(/\D/g, '').slice(0, 16)}`,
+                                agent: event.agent!,
+                                issuer: event.relatedAgent,
+                              });
+                            } else {
+                              onAgentClick(event.agent!.address);
+                            }
+                          }}
+                          className="text-[var(--accent)] hover:underline"
+                        >
+                          {agentLabel}
+                        </button>
+                      ) : (
+                        <span>{agentLabel}</span>
+                      )}
                       {event.reputationDelta && (
                         <span className={`ml-2 ${event.reputationDelta > 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {event.reputationDelta > 0 ? '+' : ''}{event.reputationDelta} rep
                         </span>
                       )}
                     </div>
+                    {/* Fiber link */}
+                    {fiberId && onFiberClick && (
+                      <button
+                        onClick={() => onFiberClick(fiberId)}
+                        className="text-xs text-purple-400 hover:text-purple-300 mt-1 flex items-center gap-1"
+                      >
+                        <span>→</span> View Fiber
+                      </button>
+                    )}
                   </div>
                   <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">
                     {formatTime(event.timestamp)}

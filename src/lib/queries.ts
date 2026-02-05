@@ -45,7 +45,7 @@ export const AGENT_DETAILS = gql`
         verified
         linkedAt
       }
-      attestationsReceived {
+      attestationsReceived(limit: 20) {
         id
         type
         issuer {
@@ -57,12 +57,42 @@ export const AGENT_DETAILS = gql`
         createdAt
         txHash
       }
+      contractsAsProposer {
+        id
+        contractId
+        counterparty {
+          address
+          displayName
+        }
+        state
+        proposedAt
+        completedAt
+      }
+      contractsAsCounterparty {
+        id
+        contractId
+        proposer {
+          address
+          displayName
+        }
+        state
+        proposedAt
+        completedAt
+      }
       reputationHistory(limit: 50) {
         reputation
         delta
         reason
         recordedAt
       }
+    }
+    fibersByOwner(address: $address, limit: 10) {
+      fiberId
+      workflowType
+      currentState
+      status
+      sequenceNumber
+      updatedAt
     }
   }
 `;
@@ -138,6 +168,7 @@ export const RECENT_ACTIVITY = gql`
         address
         displayName
       }
+      fiberId
     }
   }
 `;
@@ -216,6 +247,25 @@ export interface ReputationPoint {
   recordedAt: string;
 }
 
+export interface AgentContract {
+  id: string;
+  contractId: string;
+  proposer?: { address: string; displayName: string | null };
+  counterparty?: { address: string; displayName: string | null };
+  state: 'PROPOSED' | 'ACTIVE' | 'COMPLETED' | 'REJECTED' | 'DISPUTED';
+  proposedAt: string;
+  completedAt: string | null;
+}
+
+export interface AgentFiber {
+  fiberId: string;
+  workflowType: string;
+  currentState: string;
+  status: string;
+  sequenceNumber: number;
+  updatedAt: string;
+}
+
 export interface Agent {
   address: string;
   publicKey: string;
@@ -225,6 +275,8 @@ export interface Agent {
   createdAt: string;
   platformLinks?: PlatformLink[];
   attestationsReceived?: Attestation[];
+  contractsAsProposer?: AgentContract[];
+  contractsAsCounterparty?: AgentContract[];
   reputationHistory?: ReputationPoint[];
 }
 
@@ -266,4 +318,5 @@ export interface ActivityEvent {
   action: string;
   reputationDelta: number | null;
   relatedAgent: { address: string; displayName: string | null } | null;
+  fiberId: string | null;
 }
