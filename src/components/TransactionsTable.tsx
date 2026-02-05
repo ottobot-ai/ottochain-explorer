@@ -58,16 +58,29 @@ export function TransactionsTable({ contracts, activity, onAgentClick }: Transac
     }));
 
     const activityTxs = activity
-      .filter((a) => a.eventType === 'ATTESTATION')
-      .map((a, i) => ({
-        id: `att-${i}`,
-        type: 'ATTEST',
-        parties: `${a.agent?.displayName || a.agent?.address?.slice(0,12) || '?'}...`,
-        amount: a.reputationDelta ? `${a.reputationDelta > 0 ? '+' : ''}${a.reputationDelta} rep` : '–',
-        status: 'COMPLETED',
-        time: a.timestamp,
-        clickAddress: a.agent?.address,
-      }));
+      .map((a, i) => {
+        if (a.eventType === 'ATTESTATION') {
+          return {
+            id: `att-${i}`,
+            type: 'ATTEST',
+            parties: `${a.agent?.displayName || a.agent?.address?.slice(0,12) || '?'}...`,
+            amount: a.reputationDelta ? `${a.reputationDelta > 0 ? '+' : ''}${a.reputationDelta} rep` : '–',
+            status: 'COMPLETED',
+            time: a.timestamp,
+            clickAddress: a.agent?.address,
+          };
+        }
+        // Show transitions as workflow events
+        return {
+          id: `tx-${i}`,
+          type: 'WORKFLOW',
+          parties: a.agent?.displayName || a.action || 'Agent',
+          amount: '–',
+          status: 'COMPLETED',
+          time: a.timestamp,
+          clickAddress: a.agent?.address,
+        };
+      });
 
     return [...contractTxs, ...activityTxs]
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
@@ -114,8 +127,8 @@ export function TransactionsTable({ contracts, activity, onAgentClick }: Transac
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1 overflow-y-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto flex-1 overflow-y-auto min-h-0">
+        <table className="w-full text-sm h-full">
           <thead className="sticky top-0 bg-[var(--bg-card)]">
             <tr className="text-[var(--text-muted)] text-xs uppercase tracking-wider">
               <th className="text-left py-2 px-3">Type</th>
