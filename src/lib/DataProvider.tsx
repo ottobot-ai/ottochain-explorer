@@ -129,6 +129,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 }
 
+ 
 export function useData() {
   const ctx = useContext(DataContext);
   if (!ctx) throw new Error('useData must be used within DataProvider');
@@ -136,12 +137,17 @@ export function useData() {
 }
 
 // Hook for components that want the latest ref value without triggering re-renders
+ 
 export function useDataRef() {
   const ctx = useContext(DataContext);
   if (!ctx) throw new Error('useDataRef must be used within DataProvider');
   
   const dataRef = useRef(ctx.data);
-  dataRef.current = ctx.data;
+  
+  // Update ref in effect to avoid render-phase mutation
+  useEffect(() => {
+    dataRef.current = ctx.data;
+  }, [ctx.data]);
   
   return dataRef;
 }

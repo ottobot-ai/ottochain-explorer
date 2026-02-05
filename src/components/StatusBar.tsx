@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 interface StatusBarProps {
   snapshotOrdinal: number | null;
 }
@@ -10,7 +12,8 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
     dl1: { count: 3, healthy: 3 },
   };
 
-  const tps = (Math.random() * 50 + 100).toFixed(1);
+  // Mock TPS - stable across re-renders (in production would come from API)
+  const tps = useMemo(() => (Math.random() * 50 + 100).toFixed(1), []);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-[var(--border)] py-2 px-6 z-40">

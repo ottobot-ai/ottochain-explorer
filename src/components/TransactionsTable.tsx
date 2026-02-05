@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { Contract, ActivityEvent } from '../lib/queries';
 
 interface TransactionsTableProps {
@@ -8,6 +8,11 @@ interface TransactionsTableProps {
 }
 
 type FilterType = 'all' | 'workflows' | 'payments' | 'attestations';
+
+interface ContractTerms {
+  value?: number;
+  [key: string]: unknown;
+}
 
 export function TransactionsTable({ contracts, activity, onAgentClick }: TransactionsTableProps) {
   const [filter, setFilter] = useState<FilterType>('all');
@@ -32,13 +37,13 @@ export function TransactionsTable({ contracts, activity, onAgentClick }: Transac
     return { bg: 'bg-gray-500/20 text-gray-400', icon: '–', text: status };
   };
 
-  const formatTime = (ts: string) => {
+  const formatTime = useCallback((ts: string) => {
     const diff = Date.now() - new Date(ts).getTime();
     if (diff < 60000) return 'just now';
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
     return `${Math.floor(diff / 86400000)}d ago`;
-  };
+  }, []);
 
   // Merge contracts and activity into unified transactions
   const transactions = useMemo(() => {
@@ -46,7 +51,7 @@ export function TransactionsTable({ contracts, activity, onAgentClick }: Transac
       id: c.id,
       type: c.state === 'COMPLETED' ? 'PAYMENT' : 'WORKFLOW',
       parties: `${c.proposer?.displayName || c.proposer?.address?.slice(0,12) || '?'}... → ${c.counterparty?.displayName || c.counterparty?.address?.slice(0,12) || '?'}...`,
-      amount: (c.terms as any)?.value ? `${(c.terms as any).value} OTTO` : '–',
+      amount: (c.terms as ContractTerms)?.value ? `${(c.terms as ContractTerms).value} OTTO` : '–',
       status: c.state,
       time: c.proposedAt,
       clickAddress: c.proposer?.address,

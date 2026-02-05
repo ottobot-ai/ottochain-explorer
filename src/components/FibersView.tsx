@@ -143,6 +143,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
   const [ownerFilter, setOwnerFilter] = useState<string>('');
 
   // Handle external fiber selection (e.g., from global search)
+   
   useEffect(() => {
     if (initialFiberId) {
       setSelectedFiber(initialFiberId);

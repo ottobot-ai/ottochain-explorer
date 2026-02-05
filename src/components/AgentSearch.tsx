@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { SEARCH_AGENTS, AGENTS_LIST, AGENT_DETAILS } from '../lib/queries';
-import type { Agent } from '../lib/queries';
+import type { Agent, PlatformLink, Attestation } from '../lib/queries';
 import { CopyAddress } from './CopyAddress';
 import { AgentAvatar } from './AgentAvatar';
 import { ReputationChart } from './ReputationChart';
@@ -16,6 +16,7 @@ export function AgentSearch({ initialSelectedAgent }: AgentSearchProps) {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(initialSelectedAgent || null);
   
   // Update selection when nav search selects an agent
+   
   useEffect(() => {
     if (initialSelectedAgent) {
       setSelectedAgent(initialSelectedAgent);
@@ -144,7 +145,7 @@ export function AgentSearch({ initialSelectedAgent }: AgentSearchProps) {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">🔗 Platform Links</h3>
                 <div className="flex flex-wrap gap-2">
-                  {agentDetails.agent.platformLinks?.map((link: any) => (
+                  {agentDetails.agent.platformLinks?.map((link: PlatformLink) => (
                     <span
                       key={link.platform}
                       className="px-3 py-1 bg-[var(--bg-elevated)] rounded-full text-sm flex items-center gap-2"
@@ -178,7 +179,7 @@ export function AgentSearch({ initialSelectedAgent }: AgentSearchProps) {
                 <p className="text-[var(--text-muted)]">No attestations yet</p>
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {agentDetails.agent.attestationsReceived?.map((att: any) => (
+                  {agentDetails.agent.attestationsReceived?.map((att: Attestation) => (
                     <div key={att.id} className="p-3 bg-[var(--bg-elevated)] rounded-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
