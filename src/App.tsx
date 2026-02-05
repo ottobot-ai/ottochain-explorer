@@ -28,6 +28,7 @@ function App() {
   const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
   const [modalAttestation, setModalAttestation] = useState<AttestationModalData | null>(null);
+  const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
   
   // Use shared data from background polling
   const { data, isLoading, refresh, autoUpdate, setAutoUpdate } = useData();
@@ -41,9 +42,14 @@ function App() {
     setModalAttestation(attestation);
   };
 
+  const handleFiberSelect = (fiberId: string) => {
+    setSelectedFiber(fiberId);
+    setView('fibers');
+  };
+
   return (
     <div className="min-h-screen pb-12">
-      <Nav view={view} setView={setView} onAgentSelect={setModalAgent} />
+      <Nav view={view} setView={setView} onAgentSelect={setModalAgent} onFiberSelect={handleFiberSelect} />
       
       <main className="container mx-auto px-6 pt-24 pb-16">
         {/* Live indicator with controls */}
@@ -107,7 +113,7 @@ function App() {
         )}
         
         {view === 'fibers' && (
-          <FibersView />
+          <FibersView initialFiberId={selectedFiber} />
         )}
         
         {view === 'identity' && (
