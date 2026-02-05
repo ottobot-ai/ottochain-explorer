@@ -76,6 +76,53 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      // Escape closes modals
+      if (e.key === 'Escape') {
+        if (modalAttestation) {
+          setModalAttestation(null);
+        } else if (modalAgent) {
+          handleAgentClose();
+        }
+        return;
+      }
+      
+      // Ctrl/Cmd + K opens search (handled by GlobalSearch)
+      // Number keys for navigation (when no modals open)
+      if (!modalAgent && !modalAttestation) {
+        switch (e.key) {
+          case '1':
+            handleViewChange('dashboard');
+            break;
+          case '2':
+            handleViewChange('fibers');
+            break;
+          case '3':
+            handleViewChange('identity');
+            break;
+          case '4':
+            handleViewChange('contracts');
+            break;
+          case 'r':
+            if (!e.metaKey && !e.ctrlKey) {
+              refresh();
+            }
+            break;
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalAgent, modalAttestation, refresh]);
+
   // Update URL hash when view/modal changes
   const updateHash = (newHash: string) => {
     window.history.pushState(null, '', `#${newHash}`);
