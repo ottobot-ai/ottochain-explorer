@@ -43,6 +43,49 @@ export function FiberStateViewer({
 }: FiberStateViewerProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredState, setHoveredState] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [lastMousePos, setLastMousePos] = useState<{ x: number; y: number } | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    setDragging(true);
+    setLastMousePos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!dragging || !lastMousePos) return;
+    const dx = e.clientX - lastMousePos.x;
+    const dy = e.clientY - lastMousePos.y;
+    setPan(prevPan => ({ x: prevPan.x + dx, y: prevPan.y + dy }));
+    setLastMousePos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setDragging(false);
+    setLastMousePos(null);
+  };
+
+  const handleWheelZoom = (e: React.WheelEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY > 0 ? 1 / 1.1 : 1.1;
+    setZoom(prevZoom => prevZoom * zoomFactor);
+  };
+
+  const fitToView = () => {
+    const container = svgRef.current?.closest('.overflow-hidden');
+    if (!container || !svgRef.current) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const svgRect = svgRef.current.getBoundingClientRect();
+
+    const scaleX = containerRect.width / svgRect.width;
+    const scaleY = containerRect.height / svgRect.height;
+    const scale = Math.min(scaleX, scaleY);
+
+    setZoom(scale);
+    setPan({ x: (containerRect.width - svgRect.width * scale) / 2, y: (containerRect.height - svgRect.height * scale) / 2 });
+  };
   const [hoveredEdge, setHoveredEdge] = useState<Edge | null>(null);
 
   // Validate definition structure
@@ -170,20 +213,40 @@ export function FiberStateViewer({
   return (
     <div className={`bg-[var(--bg-elevated)] rounded-lg p-4 ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-[var(--text-secondary)]">
-          State Machine
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-[var(--text-secondary)]">
+            State Machine
+          </h3>
+          <div className="space-x-2">
+            <button onClick={() => setZoom(zoom * 1.1)} className="btn-secondary text-xs">+</button>
+            <button onClick={() => setZoom(zoom / 1.1)} className="btn-secondary text-xs">-</button>
+            <button onClick={() => fitToView()} className="btn-secondary text-xs">Fit</button>
+          </div>
+        </div>
         <div className="text-xs text-[var(--text-muted)]">
           {definition.metadata?.name || 'Unnamed'} • {Object.keys(definition.states).length} states
         </div>
       </div>
 
-      <div className="overflow-auto" style={{ maxHeight: '400px' }}>
+      <div
+        className="overflow-hidden"
+        style={{ maxHeight: '400px', position: 'relative' }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheelZoom}
+      >
         <svg
           ref={svgRef}
-          width={width}
-          height={height}
+          width={width * zoom}
+          height={height * zoom}
           className="select-none"
+          style={{
+            transform: `scale(${zoom}) translateX(${pan.x}px) translateY(${pan.y}px)`,
+            transformOrigin: 'top left',
+            position: 'absolute'
+          }}
         >
           {/* Edges */}
           <g className="edges">
