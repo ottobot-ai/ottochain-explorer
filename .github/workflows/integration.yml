@@ -1,0 +1,243 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  TESSELLATION_VERSION: v4.0.0-rc.2
+  NODE_VERSION: '20'
+  JAVA_VERSION: '21'
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ottochain
+          POSTGRES_PASSWORD: ottochain
+          POSTGRES_DB: ottochain_identity
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ottochain"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout explorer
+        uses: actions/checkout@v4
+
+      - name: Checkout ottochain-services
+        uses: actions/checkout@v4
+        with:
+          repository: ottobot-ai/ottochain-services
+          path: services
+          ref: main
+
+      - name: Checkout ottochain
+        uses: actions/checkout@v4
+        with:
+          repository: scasplte2/ottochain
+          path: ottochain
+          ref: main
+
+      - name: Checkout tessellation
+        uses: actions/checkout@v4
+        with:
+          repository: Constellation-Labs/tessellation
+          path: tessellation
+          ref: ${{ env.TESSELLATION_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      # Build explorer
+      - name: Install explorer dependencies
+        run: npm ci
+
+      - name: Build explorer
+        run: npm run build
+
+      # Build services
+      - name: Install services dependencies
+        working-directory: services
+        run: pnpm install
+
+      - name: Build services
+        working-directory: services
+        run: pnpm build
+
+      - name: Push database schema
+        working-directory: services
+        env:
+          DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
+        run: pnpm db:push --skip-generate
+
+      # Cache and build tessellation
+      - name: Cache tessellation assemblies
+        uses: actions/cache@v4
+        with:
+          path: |
+            tessellation/modules/*/target
+            tessellation/docker/jars
+          key: tessellation-${{ env.TESSELLATION_VERSION }}-${{ hashFiles('tessellation/build.sbt') }}
+          restore-keys: |
+            tessellation-${{ env.TESSELLATION_VERSION }}-
+
+      - name: Build tessellation
+        working-directory: tessellation
+        run: |
+          sbt "sdk/publishLocal; keytool/assembly; wallet/assembly; shared/assembly; \
+               dagL0/assembly; dagL1/assembly; currencyL0/assembly; currencyL1/assembly"
+          mkdir -p docker/jars
+          cp modules/keytool/target/scala-2.13/tessellation-keytool-assembly*.jar docker/jars/keytool.jar
+          cp modules/wallet/target/scala-2.13/tessellation-wallet-assembly*.jar docker/jars/wallet.jar
+          cp modules/dag-l0/target/scala-2.13/tessellation-dag-l0-assembly*.jar docker/jars/gl0.jar
+          cp modules/dag-l1/target/scala-2.13/tessellation-dag-l1-assembly*.jar docker/jars/gl1.jar
+          cp modules/currency-l0/target/scala-2.13/tessellation-currency-l0-assembly*.jar docker/jars/ml0.jar
+          cp modules/currency-l1/target/scala-2.13/tessellation-currency-l1-assembly*.jar docker/jars/cl1.jar
+
+      - name: Build ottochain metagraph
+        working-directory: ottochain
+        run: |
+          sbt "currencyL0/assembly; dataL1/assembly"
+
+      - name: Start metagraph cluster
+        working-directory: tessellation/docker
+        run: |
+          chmod +x bin/*.sh
+          ./bin/compose-runner.sh --up --metagraph=$(pwd)/../../ottochain --dl1 --skip-assembly
+
+      - name: Wait for metagraph healthy
+        run: |
+          echo "=== Waiting for GL0 ==="
+          for i in {1..90}; do
+            if curl -s http://localhost:9000/node/info | grep -q '"state":"Ready"'; then
+              echo "GL0 ready after ${i}s"
+              break
+            fi
+            sleep 1
+            if [ $i -eq 90 ]; then echo "GL0 timeout"; exit 1; fi
+          done
+          
+          echo "=== Waiting for ML0 (may take longer on CI) ==="
+          for i in {1..180}; do
+            if curl -s http://localhost:9200/node/info | grep -q '"state":"Ready"'; then
+              echo "ML0 ready after ${i}s"
+              break
+            fi
+            sleep 1
+            if [ $i -eq 180 ]; then echo "ML0 timeout"; exit 1; fi
+          done
+          
+          echo "=== Waiting for DL1 ==="
+          for i in {1..180}; do
+            if curl -s http://localhost:9400/node/info | grep -q '"state":"Ready"'; then
+              echo "DL1 ready after ${i}s"
+              break
+            fi
+            sleep 1
+            if [ $i -eq 180 ]; then echo "DL1 timeout"; exit 1; fi
+          done
+
+      - name: Start gateway
+        working-directory: services
+        env:
+          DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
+          METAGRAPH_ML0_URL: http://localhost:9200
+          METAGRAPH_DL1_URL: http://localhost:9400
+          GATEWAY_PORT: 4000
+        run: |
+          node packages/gateway/dist/index.js &
+          sleep 3
+          curl -s http://localhost:4000/health | grep -q '"status":"ok"'
+          echo "Gateway is healthy"
+
+      - name: Start indexer
+        working-directory: services
+        env:
+          DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
+          METAGRAPH_ML0_URL: http://localhost:9200
+          METAGRAPH_DL1_URL: http://localhost:9400
+          INDEXER_PORT: 3031
+        run: |
+          node packages/indexer/dist/index.js &
+          sleep 3
+          curl -s http://localhost:3031/health | grep -q '"status":"ok"'
+          echo "Indexer is healthy"
+
+      - name: Run GraphQL integration tests
+        env:
+          GATEWAY_URL: http://localhost:4000
+          ML0_URL: http://localhost:9200
+        run: |
+          # Test GraphQL endpoint is reachable
+          echo "Testing GraphQL endpoint..."
+          curl -sf http://localhost:4000/graphql \
+            -H "Content-Type: application/json" \
+            -d '{"query": "{ __typename }"}' | grep -q "Query"
+          echo "✅ GraphQL introspection works"
+          
+          # Test dashboard query
+          echo "Testing dashboard query..."
+          curl -sf http://localhost:4000/graphql \
+            -H "Content-Type: application/json" \
+            -d '{"query": "{ dashboard { totalAgents totalContracts totalFibers latestOrdinal } }"}' \
+            | grep -q "dashboard"
+          echo "✅ Dashboard query works"
+          
+          # Test fibers query
+          echo "Testing fibers query..."
+          curl -sf http://localhost:4000/graphql \
+            -H "Content-Type: application/json" \
+            -d '{"query": "{ fibers(limit: 10) { id workflowType status } }"}' \
+            | grep -q "fibers"
+          echo "✅ Fibers query works"
+          
+          echo ""
+          echo "All GraphQL integration tests passed! ✅"
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Container list ==="
+          docker ps -a || true
+          echo "=== GL0 Logs ==="
+          docker logs gl0-0 2>&1 | tail -50 || true
+          echo "=== ML0 Logs ==="
+          docker logs ml0-0 2>&1 | tail -50 || true
+          echo "=== DL1 Logs ==="
+          docker logs dl1-0 2>&1 | tail -50 || true
+
+      - name: Cleanup
+        if: always()
+        working-directory: tessellation/docker
+        run: |
+          chmod +x bin/*.sh 2>/dev/null || true
+          ./bin/compose-runner.sh --down || true
