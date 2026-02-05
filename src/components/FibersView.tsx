@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
+import { FiberDetailPage } from './FiberDetailPage';
+import { FiberStateViewer } from './FiberStateViewer';
 
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
@@ -132,6 +134,7 @@ const getStateColor = (state: string) => stateColors[state.toLowerCase()] || 'bg
 export function FibersView() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
+  const [modalFiber, setModalFiber] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('ACTIVE');
 
   const { data: typesData, loading: typesLoading } = useQuery<WorkflowTypesData>(WORKFLOW_TYPES_QUERY);
@@ -342,8 +345,25 @@ export function FibersView() {
                 </div>
               )}
 
-              {/* State Machine Diagram */}
-              {detail.definition?.states && (
+              {/* State Machine Visualization */}
+              {detail.definition && 'initialState' in detail.definition && (
+                <FiberStateViewer 
+                  definition={detail.definition as unknown as {
+                    metadata?: { name?: string; description?: string };
+                    initialState: string;
+                    states: Record<string, {
+                      name: string;
+                      metadata?: { description?: string };
+                      actions?: Array<{ eventName: string; target: string; guards?: unknown[] }>;
+                    }>;
+                  }}
+                  currentState={detail.currentState}
+                  className="max-h-48"
+                />
+              )}
+
+              {/* State Machine Diagram (fallback for old format) */}
+              {detail.definition?.states && !('initialState' in detail.definition) && (
                 <div>
                   <div className="text-xs text-[var(--text-muted)] mb-2">States</div>
                   <div className="flex flex-wrap gap-2">
@@ -385,10 +405,26 @@ export function FibersView() {
                   </div>
                 </div>
               )}
+
+              {/* Expand Button */}
+              <button
+                onClick={() => setModalFiber(detail.fiberId)}
+                className="w-full py-2 mt-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] rounded-lg text-sm font-medium transition-colors"
+              >
+                View Full Details →
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Full Detail Modal */}
+      {modalFiber && (
+        <FiberDetailPage
+          fiberId={modalFiber}
+          onClose={() => setModalFiber(null)}
+        />
+      )}
     </div>
   );
 }
