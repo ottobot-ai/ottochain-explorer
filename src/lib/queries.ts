@@ -262,7 +262,7 @@ export interface Contract {
 export interface ActivityEvent {
   eventType: string;
   timestamp: string;
-  agent: { address: string; displayName: string | null };
+  agent: { address: string; displayName: string | null } | null;
   action: string;
   reputationDelta: number | null;
   relatedAgent: { address: string; displayName: string | null } | null;

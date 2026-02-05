@@ -67,11 +67,16 @@ export function LiveActivity({ activity, onAgentClick, onAttestationClick }: Liv
         ) : (
           activity.slice(0, 10).map((event, index) => {
             const style = getEventStyle(event.eventType, event.action);
+            const agentLabel = event.agent 
+              ? (event.agent.displayName || `${event.agent.address.slice(0, 12)}...`)
+              : event.action || 'System event';
+            
             return (
               <div
                 key={`${event.timestamp}-${index}`}
-                className={`p-3 rounded-lg border ${style.bg} ${style.border} cursor-pointer hover:brightness-110 transition-all`}
+                className={`p-3 rounded-lg border ${style.bg} ${style.border} ${event.agent ? 'cursor-pointer hover:brightness-110' : ''} transition-all`}
                 onClick={() => {
+                  if (!event.agent) return; // No agent to click
                   if (event.eventType === 'ATTESTATION' && onAttestationClick) {
                     // Create attestation data from activity event
                     onAttestationClick({
@@ -94,7 +99,7 @@ export function LiveActivity({ activity, onAgentClick, onAttestationClick }: Liv
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm">{style.label}</div>
                     <div className="text-xs text-[var(--text-muted)] truncate">
-                      {event.agent.displayName || `${event.agent.address.slice(0, 12)}...`}
+                      {agentLabel}
                       {event.reputationDelta && (
                         <span className={`ml-2 ${event.reputationDelta > 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {event.reputationDelta > 0 ? '+' : ''}{event.reputationDelta} rep
