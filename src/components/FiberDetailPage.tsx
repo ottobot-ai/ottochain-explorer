@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { gql } from '@apollo/client/core';
+import { useQuery } from '@apollo/client/react';
 import { FiberStateViewer } from './FiberStateViewer';
 import { CopyAddress } from './CopyAddress';
 
@@ -38,44 +39,82 @@ interface FiberDetailPageProps {
   onAgentClick?: (address: string) => void;
 }
 
+interface FiberData {
+  fiberId: string;
+  workflowType: string;
+  currentState: string;
+  stateData: string | Record<string, unknown>;
+  definition: string | Record<string, unknown>;
+  owners: string[];
+  sequenceNumber: number;
+  createdAt: string;
+  updatedAt: string;
+  createdOrdinal: number;
+  updatedOrdinal: number;
+}
+
+interface TransitionData {
+  id: string;
+  eventName: string;
+  fromState: string;
+  toState: string;
+  success: boolean;
+  gasUsed: number;
+  payload: string;
+  snapshotOrdinal: number;
+  createdAt: string;
+}
+
+interface GetFiberResponse {
+  fiber: FiberData | null;
+  fiberTransitions: TransitionData[];
+}
+
 // Schema-specific renderers
 function AgentIdentityView({ stateData, onAgentClick }: { 
   stateData: Record<string, unknown>;
   onAgentClick?: (address: string) => void;
 }) {
-  const { displayName, platform, platformUserId, reputation, completedContracts, vouches, violations, owner } = stateData;
+  const displayName = stateData.displayName as string | undefined;
+  const platform = stateData.platform as string | undefined;
+  const platformUserId = stateData.platformUserId as string | undefined;
+  const reputation = stateData.reputation as number | undefined;
+  const completedContracts = stateData.completedContracts as number | undefined;
+  const vouches = stateData.vouches as unknown[] | undefined;
+  const violations = stateData.violations as unknown[] | undefined;
+  const owner = stateData.owner as string | undefined;
   
   return (
     <div className="grid grid-cols-2 gap-4 p-4 bg-[var(--bg)] rounded-lg">
       <div className="col-span-2 flex items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--green)] flex items-center justify-center text-lg font-bold">
-          {(displayName as string)?.[0]?.toUpperCase() || '?'}
+          {displayName?.[0]?.toUpperCase() || '?'}
         </div>
         <div>
-          <div className="font-medium">{displayName as string || 'Unnamed Agent'}</div>
+          <div className="font-medium">{displayName || 'Unnamed Agent'}</div>
           <div className="text-sm text-[var(--text-muted)]">
-            {platform as string}:{platformUserId as string}
+            {platform}:{platformUserId}
           </div>
         </div>
       </div>
       
       <div className="p-3 bg-[var(--bg-elevated)] rounded">
-        <div className="text-2xl font-bold text-[var(--accent)]">{reputation as number ?? 0}</div>
+        <div className="text-2xl font-bold text-[var(--accent)]">{reputation ?? 0}</div>
         <div className="text-xs text-[var(--text-muted)]">Reputation</div>
       </div>
       
       <div className="p-3 bg-[var(--bg-elevated)] rounded">
-        <div className="text-2xl font-bold text-[var(--green)]">{completedContracts as number ?? 0}</div>
+        <div className="text-2xl font-bold text-[var(--green)]">{completedContracts ?? 0}</div>
         <div className="text-xs text-[var(--text-muted)]">Contracts</div>
       </div>
       
       <div className="p-3 bg-[var(--bg-elevated)] rounded">
-        <div className="text-2xl font-bold">{(vouches as unknown[])?.length ?? 0}</div>
+        <div className="text-2xl font-bold">{vouches?.length ?? 0}</div>
         <div className="text-xs text-[var(--text-muted)]">Vouches</div>
       </div>
       
       <div className="p-3 bg-[var(--bg-elevated)] rounded">
-        <div className="text-2xl font-bold text-[var(--red)]">{(violations as unknown[])?.length ?? 0}</div>
+        <div className="text-2xl font-bold text-[var(--red)]">{violations?.length ?? 0}</div>
         <div className="text-xs text-[var(--text-muted)]">Violations</div>
       </div>
       
@@ -83,10 +122,10 @@ function AgentIdentityView({ stateData, onAgentClick }: {
         <div className="col-span-2">
           <div className="text-xs text-[var(--text-muted)] mb-1">Owner</div>
           <button 
-            onClick={() => onAgentClick?.(owner as string)}
+            onClick={() => onAgentClick?.(owner)}
             className="text-sm text-[var(--accent)] hover:underline"
           >
-            <CopyAddress address={owner as string} />
+            <CopyAddress address={owner} />
           </button>
         </div>
       )}
@@ -98,28 +137,34 @@ function ContractView({ stateData, onAgentClick }: {
   stateData: Record<string, unknown>;
   onAgentClick?: (address: string) => void;
 }) {
-  const { proposer, counterparty, terms, value, completionCriteria } = stateData;
+  const proposer = stateData.proposer as string | undefined;
+  const counterparty = stateData.counterparty as string | undefined;
+  const terms = stateData.terms as string | undefined;
+  const value = stateData.value as string | undefined;
+  const completionCriteria = stateData.completionCriteria;
   
   return (
     <div className="space-y-4 p-4 bg-[var(--bg)] rounded-lg">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <div className="text-xs text-[var(--text-muted)] mb-1">Proposer</div>
-          <button 
-            onClick={() => onAgentClick?.(proposer as string)}
-            className="text-sm text-[var(--accent)] hover:underline"
-          >
-            <CopyAddress address={proposer as string} />
-          </button>
+          {proposer && (
+            <button 
+              onClick={() => onAgentClick?.(proposer)}
+              className="text-sm text-[var(--accent)] hover:underline"
+            >
+              <CopyAddress address={proposer} />
+            </button>
+          )}
         </div>
         <div>
           <div className="text-xs text-[var(--text-muted)] mb-1">Counterparty</div>
           {counterparty ? (
             <button 
-              onClick={() => onAgentClick?.(counterparty as string)}
+              onClick={() => onAgentClick?.(counterparty)}
               className="text-sm text-[var(--accent)] hover:underline"
             >
-              <CopyAddress address={counterparty as string} />
+              <CopyAddress address={counterparty} />
             </button>
           ) : (
             <span className="text-sm text-[var(--text-muted)]">Pending</span>
@@ -130,7 +175,7 @@ function ContractView({ stateData, onAgentClick }: {
       {value && (
         <div>
           <div className="text-xs text-[var(--text-muted)] mb-1">Value</div>
-          <div className="text-lg font-medium">{value as string}</div>
+          <div className="text-lg font-medium">{value}</div>
         </div>
       )}
       
@@ -138,12 +183,12 @@ function ContractView({ stateData, onAgentClick }: {
         <div>
           <div className="text-xs text-[var(--text-muted)] mb-1">Terms</div>
           <div className="text-sm bg-[var(--bg-elevated)] p-3 rounded font-mono">
-            {terms as string}
+            {terms}
           </div>
         </div>
       )}
       
-      {completionCriteria && (
+      {completionCriteria != null && (
         <div>
           <div className="text-xs text-[var(--text-muted)] mb-1">Completion Criteria</div>
           <pre className="text-xs bg-[var(--bg-elevated)] p-3 rounded overflow-auto">
@@ -169,7 +214,7 @@ function GenericStateView({ stateData }: { stateData: Record<string, unknown> })
 export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailPageProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'transitions' | 'definition'>('overview');
   
-  const { data, loading, error } = useQuery(GET_FIBER, {
+  const { data, loading, error } = useQuery<GetFiberResponse>(GET_FIBER, {
     variables: { fiberId }
   });
 

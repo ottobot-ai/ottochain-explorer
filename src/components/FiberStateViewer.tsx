@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 interface StateDefinition {
   name: string;
@@ -101,7 +101,6 @@ export function FiberStateViewer({
     });
 
     const maxDepth = Math.max(...Array.from(depthGroups.keys()));
-    const nodeWidth = 120;
     const nodeHeight = 50;
     const horizontalGap = 180;
     const verticalGap = 80;

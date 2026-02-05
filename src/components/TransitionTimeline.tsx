@@ -68,7 +68,7 @@ export function TransitionTimeline({
           </div>
         )}
 
-        {displayTransitions.map((tx, idx) => (
+        {displayTransitions.map((tx) => (
           <div 
             key={tx.id}
             onClick={() => onTransitionClick?.(tx)}

@@ -346,7 +346,7 @@ export function FibersView() {
               )}
 
               {/* State Machine Visualization */}
-              {detail.definition && (
+              {detail.definition && 'initialState' in detail.definition && (
                 <FiberStateViewer 
                   definition={detail.definition as unknown as {
                     metadata?: { name?: string; description?: string };
@@ -362,8 +362,8 @@ export function FibersView() {
                 />
               )}
 
-              {/* State Machine Diagram (fallback) */}
-              {detail.definition?.states && !detail.definition.initialState && (
+              {/* State Machine Diagram (fallback for old format) */}
+              {detail.definition?.states && !('initialState' in detail.definition) && (
                 <div>
                   <div className="text-xs text-[var(--text-muted)] mb-2">States</div>
                   <div className="flex flex-wrap gap-2">
