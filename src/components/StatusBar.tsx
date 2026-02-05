@@ -40,6 +40,20 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
         </div>
 
         <div className="flex items-center gap-6">
+          {/* Keyboard hints */}
+          <div className="flex items-center gap-2 text-[var(--text-muted)] opacity-60">
+            <kbd className="px-1.5 py-0.5 bg-[var(--bg-elevated)] rounded text-[10px] font-mono">⌘K</kbd>
+            <span>search</span>
+            <span className="mx-1">·</span>
+            <kbd className="px-1.5 py-0.5 bg-[var(--bg-elevated)] rounded text-[10px] font-mono">1-4</kbd>
+            <span>nav</span>
+            <span className="mx-1">·</span>
+            <kbd className="px-1.5 py-0.5 bg-[var(--bg-elevated)] rounded text-[10px] font-mono">R</kbd>
+            <span>refresh</span>
+          </div>
+          
+          <div className="w-px h-4 bg-[var(--border)]" />
+          
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)]">Block</span>
             <span className="font-mono font-medium text-[var(--accent-2)]">
