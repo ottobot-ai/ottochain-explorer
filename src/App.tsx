@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useData } from './lib/DataProvider';
 import { Nav } from './components/Nav';
 import { StatsCards } from './components/StatsCards';
@@ -24,6 +24,24 @@ interface AttestationModalData {
   issuer?: { address: string; displayName: string | null } | null;
 }
 
+// Parse URL hash for deep linking
+function parseHash(): { view: string; agent?: string; fiber?: string } {
+  const hash = window.location.hash.slice(1); // Remove #
+  if (!hash) return { view: 'dashboard' };
+  
+  const parts = hash.split('/');
+  if (parts[0] === 'agent' && parts[1]) {
+    return { view: 'dashboard', agent: parts[1] };
+  }
+  if (parts[0] === 'fiber' && parts[1]) {
+    return { view: 'fibers', fiber: parts[1] };
+  }
+  if (['dashboard', 'fibers', 'identity', 'contracts'].includes(parts[0])) {
+    return { view: parts[0] };
+  }
+  return { view: 'dashboard' };
+}
+
 function App() {
   const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
@@ -34,8 +52,43 @@ function App() {
   const { data, isLoading, refresh, autoUpdate, setAutoUpdate } = useData();
   const currentStats = data.stats;
 
+  // Handle URL hash changes for deep linking
+  useEffect(() => {
+    const handleHashChange = () => {
+      const parsed = parseHash();
+      if (parsed.agent) {
+        setModalAgent(parsed.agent);
+      }
+      if (parsed.fiber) {
+        setSelectedFiber(parsed.fiber);
+        setView('fibers');
+      }
+      if (parsed.view && !parsed.agent && !parsed.fiber) {
+        setView(parsed.view as typeof view);
+      }
+    };
+    
+    // Initial parse
+    handleHashChange();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Update URL hash when view/modal changes
+  const updateHash = (newHash: string) => {
+    window.history.pushState(null, '', `#${newHash}`);
+  };
+
   const handleAgentClick = (address: string) => {
     setModalAgent(address);
+    updateHash(`agent/${address}`);
+  };
+
+  const handleAgentClose = () => {
+    setModalAgent(null);
+    updateHash(view);
   };
 
   const handleAttestationClick = (attestation: AttestationModalData) => {
@@ -45,11 +98,18 @@ function App() {
   const handleFiberSelect = (fiberId: string) => {
     setSelectedFiber(fiberId);
     setView('fibers');
+    updateHash(`fiber/${fiberId}`);
+  };
+
+  const handleViewChange = (newView: typeof view) => {
+    setView(newView);
+    setSelectedFiber(null);
+    updateHash(newView);
   };
 
   return (
     <div className="min-h-screen pb-12">
-      <Nav view={view} setView={setView} onAgentSelect={setModalAgent} onFiberSelect={handleFiberSelect} />
+      <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} />
       
       <main className="container mx-auto px-6 pt-24 pb-16">
         {/* Live indicator with controls */}
@@ -133,9 +193,9 @@ function App() {
       {modalAgent && (
         <AgentModal 
           address={modalAgent} 
-          onClose={() => setModalAgent(null)}
+          onClose={handleAgentClose}
           onFiberClick={(fiberId) => {
-            setModalAgent(null);
+            handleAgentClose();
             handleFiberSelect(fiberId);
           }}
         />
