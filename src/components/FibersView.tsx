@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
@@ -131,17 +131,31 @@ const stateColors: Record<string, string> = {
 
 const getStateColor = (state: string) => stateColors[state.toLowerCase()] || 'bg-gray-500/20 text-gray-400';
 
-export function FibersView() {
+interface FibersViewProps {
+  initialFiberId?: string | null;
+}
+
+export function FibersView({ initialFiberId }: FibersViewProps = {}) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
+  const [selectedFiber, setSelectedFiber] = useState<string | null>(initialFiberId || null);
   const [modalFiber, setModalFiber] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('ACTIVE');
+  const [statusFilter, setStatusFilter] = useState<string>(initialFiberId ? '' : 'ACTIVE');
+  const [ownerFilter, setOwnerFilter] = useState<string>('');
+
+  // Handle external fiber selection (e.g., from global search)
+  useEffect(() => {
+    if (initialFiberId) {
+      setSelectedFiber(initialFiberId);
+      setStatusFilter(''); // Clear status filter to ensure fiber is visible
+    }
+  }, [initialFiberId]);
 
   const { data: typesData, loading: typesLoading } = useQuery<WorkflowTypesData>(WORKFLOW_TYPES_QUERY);
   const { data: fibersData, loading: fibersLoading } = useQuery<FibersData>(FIBERS_QUERY, {
     variables: {
       workflowType: selectedType,
       status: statusFilter || undefined,
+      owner: ownerFilter || undefined,
       limit: 50,
     },
     pollInterval: 10000,
@@ -168,6 +182,13 @@ export function FibersView() {
           </p>
         </div>
         <div className="flex gap-2">
+          <input
+            type="text"
+            value={ownerFilter}
+            onChange={(e) => setOwnerFilter(e.target.value)}
+            placeholder="Filter by owner (DAG...)"
+            className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-48 placeholder:text-[var(--text-muted)]"
+          />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

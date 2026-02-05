@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLazyQuery } from '@apollo/client/react';
-import { SEARCH_AGENTS, type Agent } from '../lib/queries';
+import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
   view: 'dashboard' | 'fibers' | 'identity' | 'contracts';
   setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts') => void;
   onAgentSelect?: (address: string) => void;
+  onFiberSelect?: (fiberId: string) => void;
 }
 
 type Network = 'mainnet' | 'testnet' | 'devnet';
@@ -16,35 +16,14 @@ const networks: { id: Network; label: string; color: string }[] = [
   { id: 'devnet', label: 'Devnet', color: 'blue' },
 ];
 
-export function Nav({ view, setView, onAgentSelect }: NavProps) {
-  const [search, setSearch] = useState('');
-  const [showResults, setShowResults] = useState(false);
+export function Nav({ view, setView, onAgentSelect, onFiberSelect }: NavProps) {
   const [network, setNetwork] = useState<Network>('devnet');
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<HTMLDivElement>(null);
 
-  const [searchAgents, { data: searchData, loading: searchLoading }] = useLazyQuery<{ searchAgents: Agent[] }>(SEARCH_AGENTS);
-
-  // Debounced search
-  useEffect(() => {
-    if (search.length >= 2) {
-      const timer = setTimeout(() => {
-        searchAgents({ variables: { query: search } });
-        setShowResults(true);
-      }, 200);
-      return () => clearTimeout(timer);
-    } else {
-      setShowResults(false);
-    }
-  }, [search, searchAgents]);
-
-  // Click outside handlers
+  // Click outside handler for network menu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowResults(false);
-      }
       if (networkRef.current && !networkRef.current.contains(e.target as Node)) {
         setShowNetworkMenu(false);
       }
@@ -53,11 +32,14 @@ export function Nav({ view, setView, onAgentSelect }: NavProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (address: string) => {
-    setSearch('');
-    setShowResults(false);
+  const handleAgentSelect = (address: string) => {
     setView('identity');
     onAgentSelect?.(address);
+  };
+
+  const handleFiberSelect = (fiberId: string) => {
+    setView('fibers');
+    onFiberSelect?.(fiberId);
   };
 
   const currentNetwork = networks.find(n => n.id === network)!;
@@ -71,68 +53,12 @@ export function Nav({ view, setView, onAgentSelect }: NavProps) {
           <span>OttoChain</span>
         </a>
         
-        {/* Search Bar */}
-        <div ref={searchRef} className="flex-1 max-w-xl relative">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">🔍</span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onFocus={() => search.length >= 2 && setShowResults(true)}
-              placeholder="Search agents by name or address..."
-              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-            />
-            {searchLoading && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">
-                ...
-              </span>
-            )}
-          </div>
-          
-          {/* Search Results Dropdown */}
-          {showResults && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg shadow-xl overflow-hidden z-50">
-              {searchData?.searchAgents?.length ? (
-                <ul>
-                  {searchData.searchAgents.slice(0, 5).map((agent: Agent) => (
-                    <li key={agent.address}>
-                      <button
-                        onClick={() => handleSelect(agent.address)}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-card)] transition-colors text-left"
-                      >
-                        <div>
-                          <span className="text-white font-medium">
-                            {agent.displayName || agent.address.slice(0, 12) + '...'}
-                          </span>
-                          <span className="text-[var(--text-muted)] text-xs ml-2">
-                            {agent.address.slice(0, 8)}...{agent.address.slice(-6)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            agent.state === 'ACTIVE' ? 'bg-green-500/20 text-green-400' :
-                            agent.state === 'PROBATION' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-gray-500/20 text-gray-400'
-                          }`}>
-                            {agent.state}
-                          </span>
-                          <span className="text-[var(--accent)] font-medium">
-                            {agent.reputation}
-                          </span>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="px-4 py-3 text-[var(--text-muted)] text-sm text-center">
-                  {search.length >= 2 ? 'No agents found' : 'Type to search...'}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Global Search (searches fibers, agents, transitions) */}
+        <GlobalSearch
+          onAgentSelect={handleAgentSelect}
+          onFiberSelect={handleFiberSelect}
+          className="flex-1 max-w-xl"
+        />
         
         {/* Nav Links */}
         <div className="flex items-center gap-6">
