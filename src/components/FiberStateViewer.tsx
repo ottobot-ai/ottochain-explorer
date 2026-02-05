@@ -48,12 +48,12 @@ export function FiberStateViewer({
   const [dragging, setDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState<{ x: number; y: number } | null>(null);
 
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     setDragging(true);
     setLastMousePos({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!dragging || !lastMousePos) return;
     const dx = e.clientX - lastMousePos.x;
     const dy = e.clientY - lastMousePos.y;
@@ -66,7 +66,7 @@ export function FiberStateViewer({
     setLastMousePos(null);
   };
 
-  const handleWheelZoom = (e: React.WheelEvent<SVGSVGElement>) => {
+  const handleWheelZoom = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
     const zoomFactor = e.deltaY > 0 ? 1 / 1.1 : 1.1;
     setZoom(prevZoom => prevZoom * zoomFactor);
