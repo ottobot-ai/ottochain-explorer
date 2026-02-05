@@ -88,19 +88,14 @@ export function FiberStateViewer({
   };
   const [hoveredEdge, setHoveredEdge] = useState<Edge | null>(null);
 
-  // Validate definition structure
-  if (!definition?.initialState || !definition?.states) {
-    return (
-      <div className={`bg-[var(--bg-elevated)] rounded-lg p-4 ${className}`}>
-        <div className="text-sm text-[var(--text-muted)]">
-          Unable to visualize state machine - invalid definition format
-        </div>
-      </div>
-    );
-  }
-
   // Calculate node positions in a circular/hierarchical layout
-  const { nodes, edges, width, height } = useMemo(() => {
+  // Must be called unconditionally (React hooks rule)
+  const { nodes, edges, width, height, isValid } = useMemo(() => {
+    // Validate definition structure inside useMemo
+    if (!definition?.initialState || !definition?.states) {
+      return { nodes: [], edges: [], width: 0, height: 0, isValid: false };
+    }
+    
     const states = Object.entries(definition.states);
     const stateNames = states.map(([name]) => name);
     
@@ -178,9 +173,21 @@ export function FiberStateViewer({
       nodes: nodePositions,
       edges: edgeList,
       width: svgWidth,
-      height: svgHeight
+      height: svgHeight,
+      isValid: true
     };
   }, [definition]);
+
+  // Early return for invalid definition (after hooks)
+  if (!isValid) {
+    return (
+      <div className={`bg-[var(--bg-elevated)] rounded-lg p-4 ${className}`}>
+        <div className="text-sm text-[var(--text-muted)]">
+          Unable to visualize state machine - invalid definition format
+        </div>
+      </div>
+    );
+  }
 
   // Draw curved edges with arrows
   const getEdgePath = (from: NodePosition, to: NodePosition, edgeIndex: number, totalEdges: number) => {

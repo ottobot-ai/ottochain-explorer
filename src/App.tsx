@@ -52,6 +52,38 @@ function App() {
   const { data, isLoading, refresh, autoUpdate, setAutoUpdate } = useData();
   const currentStats = data.stats;
 
+  // Update URL hash when view/modal changes
+  const updateHash = (newHash: string) => {
+    window.history.pushState(null, '', `#${newHash}`);
+  };
+
+  // Declare handlers BEFORE useEffects that reference them
+  const handleViewChange = (newView: typeof view) => {
+    setView(newView);
+    setSelectedFiber(null);
+    updateHash(newView);
+  };
+
+  const handleAgentClick = (address: string) => {
+    setModalAgent(address);
+    updateHash(`agent/${address}`);
+  };
+
+  const handleAgentClose = () => {
+    setModalAgent(null);
+    updateHash(view);
+  };
+
+  const handleAttestationClick = (attestation: AttestationModalData) => {
+    setModalAttestation(attestation);
+  };
+
+  const handleFiberSelect = (fiberId: string) => {
+    setSelectedFiber(fiberId);
+    setView('fibers');
+    updateHash(`fiber/${fiberId}`);
+  };
+
   // Handle URL hash changes for deep linking
   useEffect(() => {
     const handleHashChange = () => {
@@ -121,38 +153,7 @@ function App() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [modalAgent, modalAttestation, refresh]);
-
-  // Update URL hash when view/modal changes
-  const updateHash = (newHash: string) => {
-    window.history.pushState(null, '', `#${newHash}`);
-  };
-
-  const handleAgentClick = (address: string) => {
-    setModalAgent(address);
-    updateHash(`agent/${address}`);
-  };
-
-  const handleAgentClose = () => {
-    setModalAgent(null);
-    updateHash(view);
-  };
-
-  const handleAttestationClick = (attestation: AttestationModalData) => {
-    setModalAttestation(attestation);
-  };
-
-  const handleFiberSelect = (fiberId: string) => {
-    setSelectedFiber(fiberId);
-    setView('fibers');
-    updateHash(`fiber/${fiberId}`);
-  };
-
-  const handleViewChange = (newView: typeof view) => {
-    setView(newView);
-    setSelectedFiber(null);
-    updateHash(newView);
-  };
+  }, [modalAgent, modalAttestation, refresh, handleAgentClose, handleViewChange]);
 
   return (
     <div className="min-h-screen pb-12">
