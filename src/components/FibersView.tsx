@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { exportToCSV, exportToJSON } from '../lib/export';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
@@ -138,6 +138,10 @@ interface FibersViewProps {
 
 export function FibersView({ initialFiberId }: FibersViewProps = {}) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [currentStateFilter, setCurrentStateFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedFiber, setSelectedFiber] = useState<string | null>(initialFiberId || null);
   const [modalFiber, setModalFiber] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>(initialFiberId ? '' : 'ACTIVE');
@@ -160,15 +164,39 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
       owner: ownerFilter || undefined,
       limit: 50,
     },
-    pollInterval: 10000,
   });
+
+  // Client-side filtering
+  const filteredFibers = useMemo(() => {
+    let result = fibersData?.fibers || [];
+
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      result = result.filter(fiber => new Date(fiber.createdAt) >= from);
+    }
+
+    if (dateTo) {
+      const to = new Date(dateTo);
+      result = result.filter(fiber => new Date(fiber.createdAt) <= to);
+    }
+
+    if (currentStateFilter) {
+      result = result.filter(fiber => fiber.currentState === currentStateFilter);
+    }
+
+    if (searchQuery) {
+      result = result.filter(fiber => fiber.fiberId.includes(searchQuery));
+    }
+
+    return result;
+  }, [fibersData?.fibers, dateFrom, dateTo, currentStateFilter, searchQuery]);
   const { data: fiberDetail } = useQuery<FiberDetailData>(FIBER_DETAIL_QUERY, {
     variables: { fiberId: selectedFiber },
     skip: !selectedFiber,
   });
 
   const workflowTypes: WorkflowType[] = typesData?.workflowTypes || [];
-  const fibers: Fiber[] = fibersData?.fibers || [];
+  const fibers: Fiber[] = filteredFibers;
   const detail: Fiber | null = fiberDetail?.fiber || null;
 
   const totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
@@ -183,7 +211,8 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
             Browse all state machines on-chain — {totalFibers} total fibers
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
           <input
             type="text"
             value={ownerFilter}
@@ -201,15 +230,57 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
             <option value="ARCHIVED">Archived</option>
             <option value="FAILED">Failed</option>
           </select>
-          <div className="flex gap-2">
-            <button onClick={() => exportToCSV(fibers, 'fibers.csv')} className="btn-secondary text-xs">
-              📥 CSV
-            </button>
-            <button onClick={() => exportToJSON(fibers, 'fibers.json')} className="btn-secondary text-xs">
-              📥 JSON
-            </button>
-          </div>
         </div>
+
+        {/* Advanced Filters */}
+        <div className="mt-4">
+          <details open>
+            <summary className="cursor-pointer font-semibold text-[var(--text-primary)]">Advanced Filters</summary>
+            <div className="flex flex-col gap-2 mt-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                placeholder="Created after"
+                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
+              />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                placeholder="Created before"
+                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
+              />
+              <select
+                value={currentStateFilter}
+                onChange={(e) => setCurrentStateFilter(e.target.value)}
+                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
+              >
+                <option value="">All States</option>
+                {selectedType && workflowTypes.find(type => type.name === selectedType)?.states.map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by Fiber ID"
+                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
+              />
+            </div>
+          </details>
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={() => exportToCSV(fibers, 'fibers.csv')} className="btn-secondary text-xs">
+            📥 CSV
+          </button>
+          <button onClick={() => exportToJSON(fibers, 'fibers.json')} className="btn-secondary text-xs">
+            📥 JSON
+          </button>
+        </div>
+      </div>
       </div>
 
       {/* Workflow Type Cards */}
