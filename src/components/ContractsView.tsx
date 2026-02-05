@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { exportToCSV, exportToJSON } from '../lib/export';
 import { useQuery } from '@apollo/client/react';
 import { CONTRACTS_LIST, CONTRACT_DETAILS } from '../lib/queries';
 import type { Contract } from '../lib/queries';
@@ -50,9 +51,19 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
       {/* Contract List */}
       <div className="lg:col-span-1 card h-full flex flex-col">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 flex-shrink-0">
-          <span>📄</span> Contracts
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2 flex-shrink-0">
+            <span>📄</span> Contracts
+          </h2>
+          <div className="flex gap-2">
+            <button onClick={() => exportToCSV(data?.contracts || [], 'contracts.csv')} className="btn-secondary text-xs">
+              📥 CSV
+            </button>
+            <button onClick={() => exportToJSON(data?.contracts || [], 'contracts.json')} className="btn-secondary text-xs">
+              📥 JSON
+            </button>
+          </div>
+        </div>
         
         {/* State Filter */}
         <div className="flex flex-wrap gap-2 mb-4 flex-shrink-0">

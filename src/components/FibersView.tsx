@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { exportToCSV, exportToJSON } from '../lib/export';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
@@ -200,6 +201,14 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
             <option value="ARCHIVED">Archived</option>
             <option value="FAILED">Failed</option>
           </select>
+          <div className="flex gap-2">
+            <button onClick={() => exportToCSV(fibers, 'fibers.csv')} className="btn-secondary text-xs">
+              📥 CSV
+            </button>
+            <button onClick={() => exportToJSON(fibers, 'fibers.json')} className="btn-secondary text-xs">
+              📥 JSON
+            </button>
+          </div>
         </div>
       </div>
 
