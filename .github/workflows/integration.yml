@@ -206,20 +206,20 @@ jobs:
           echo "$RESPONSE" | grep -q "Query" || { echo "❌ Failed: expected 'Query' in response"; exit 1; }
           echo "✅ GraphQL introspection works"
           
-          # Test dashboard query
-          echo "Testing dashboard query..."
+          # Test networkStats query (dashboard data)
+          echo "Testing networkStats query..."
           RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
-            -d '{"query": "{ dashboard { totalAgents totalContracts totalFibers latestOrdinal } }"}')
+            -d '{"query": "{ networkStats { totalAgents totalContracts totalFibers lastSnapshotOrdinal } }"}')
           echo "Response: $RESPONSE"
-          echo "$RESPONSE" | grep -q "dashboard" || { echo "❌ Failed: expected 'dashboard' in response"; exit 1; }
-          echo "✅ Dashboard query works"
+          echo "$RESPONSE" | grep -q "networkStats" || { echo "❌ Failed: expected 'networkStats' in response"; exit 1; }
+          echo "✅ NetworkStats query works"
           
-          # Test fibers query
+          # Test fibers query (fiberId not id)
           echo "Testing fibers query..."
           RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
-            -d '{"query": "{ fibers(limit: 10) { id workflowType status } }"}')
+            -d '{"query": "{ fibers(limit: 10) { fiberId workflowType status } }"}')
           echo "Response: $RESPONSE"
           echo "$RESPONSE" | grep -q "fibers" || { echo "❌ Failed: expected 'fibers' in response"; exit 1; }
           echo "✅ Fibers query works"
