@@ -199,25 +199,29 @@ jobs:
         run: |
           # Test GraphQL endpoint is reachable
           echo "Testing GraphQL endpoint..."
-          curl -sf http://localhost:4000/graphql \
+          RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
-            -d '{"query": "{ __typename }"}' | grep -q "Query"
+            -d '{"query": "{ __typename }"}')
+          echo "Response: $RESPONSE"
+          echo "$RESPONSE" | grep -q "Query" || { echo "❌ Failed: expected 'Query' in response"; exit 1; }
           echo "✅ GraphQL introspection works"
           
           # Test dashboard query
           echo "Testing dashboard query..."
-          curl -sf http://localhost:4000/graphql \
+          RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
-            -d '{"query": "{ dashboard { totalAgents totalContracts totalFibers latestOrdinal } }"}' \
-            | grep -q "dashboard"
+            -d '{"query": "{ dashboard { totalAgents totalContracts totalFibers latestOrdinal } }"}')
+          echo "Response: $RESPONSE"
+          echo "$RESPONSE" | grep -q "dashboard" || { echo "❌ Failed: expected 'dashboard' in response"; exit 1; }
           echo "✅ Dashboard query works"
           
           # Test fibers query
           echo "Testing fibers query..."
-          curl -sf http://localhost:4000/graphql \
+          RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
-            -d '{"query": "{ fibers(limit: 10) { id workflowType status } }"}' \
-            | grep -q "fibers"
+            -d '{"query": "{ fibers(limit: 10) { id workflowType status } }"}')
+          echo "Response: $RESPONSE"
+          echo "$RESPONSE" | grep -q "fibers" || { echo "❌ Failed: expected 'fibers' in response"; exit 1; }
           echo "✅ Fibers query works"
           
           echo ""
