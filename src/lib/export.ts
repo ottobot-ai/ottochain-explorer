@@ -1,8 +1,9 @@
-export function exportToCSV(data: Record<string, unknown>[], filename: string) {
-  const headers = Object.keys(data[0] || {});
+export function exportToCSV<T extends object>(data: T[], filename: string) {
+  if (data.length === 0) return;
+  const headers = Object.keys(data[0]);
   const csvContent = [
     headers.join(','),
-    ...data.map(row => headers.map(h => JSON.stringify(row[h] ?? '')).join(','))
+    ...data.map(row => headers.map(h => JSON.stringify((row as Record<string, unknown>)[h] ?? '')).join(','))
   ].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv' });
