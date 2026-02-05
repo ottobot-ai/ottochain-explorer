@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useData } from './lib/DataProvider';
 import { Nav } from './components/Nav';
 import { StatsCards } from './components/StatsCards';
@@ -58,21 +58,22 @@ function App() {
   };
 
   // Declare handlers BEFORE useEffects that reference them
-  const handleViewChange = (newView: typeof view) => {
+  // Wrapped in useCallback to prevent unnecessary re-renders
+  const handleViewChange = useCallback((newView: typeof view) => {
     setView(newView);
     setSelectedFiber(null);
     updateHash(newView);
-  };
+  }, []);
 
-  const handleAgentClick = (address: string) => {
+  const handleAgentClick = useCallback((address: string) => {
     setModalAgent(address);
     updateHash(`agent/${address}`);
-  };
+  }, []);
 
-  const handleAgentClose = () => {
+  const handleAgentClose = useCallback(() => {
     setModalAgent(null);
     updateHash(view);
-  };
+  }, [view]);
 
   const handleAttestationClick = (attestation: AttestationModalData) => {
     setModalAttestation(attestation);
