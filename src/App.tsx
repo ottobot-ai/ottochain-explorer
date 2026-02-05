@@ -100,6 +100,7 @@ function App() {
                   activity={data.activity} 
                   onAgentClick={handleAgentClick}
                   onAttestationClick={handleAttestationClick}
+                  onFiberClick={handleFiberSelect}
                 />
                 <TopAgents agents={data.leaderboard} onAgentClick={handleAgentClick} />
               </div>
@@ -132,7 +133,11 @@ function App() {
       {modalAgent && (
         <AgentModal 
           address={modalAgent} 
-          onClose={() => setModalAgent(null)} 
+          onClose={() => setModalAgent(null)}
+          onFiberClick={(fiberId) => {
+            setModalAgent(null);
+            handleFiberSelect(fiberId);
+          }}
         />
       )}
 
