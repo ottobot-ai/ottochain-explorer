@@ -45,6 +45,17 @@ export function FiberStateViewer({
   const [hoveredState, setHoveredState] = useState<string | null>(null);
   const [hoveredEdge, setHoveredEdge] = useState<Edge | null>(null);
 
+  // Validate definition structure
+  if (!definition?.initialState || !definition?.states) {
+    return (
+      <div className={`bg-[var(--bg-elevated)] rounded-lg p-4 ${className}`}>
+        <div className="text-sm text-[var(--text-muted)]">
+          Unable to visualize state machine - invalid definition format
+        </div>
+      </div>
+    );
+  }
+
   // Calculate node positions in a circular/hierarchical layout
   const { nodes, edges, width, height } = useMemo(() => {
     const states = Object.entries(definition.states);

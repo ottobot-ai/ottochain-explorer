@@ -311,12 +311,21 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
           {activeTab === 'overview' && (
             <div className="space-y-4">
               {/* State Machine Visualization */}
-              {definition && (
+              {definition && definition.initialState && definition.states ? (
                 <FiberStateViewer 
                   definition={definition} 
                   currentState={fiber.currentState}
                 />
-              )}
+              ) : definition ? (
+                <div className="bg-[var(--bg-elevated)] rounded-lg p-4">
+                  <div className="text-sm font-medium text-[var(--text-secondary)] mb-2">
+                    State Machine Definition
+                  </div>
+                  <pre className="text-xs font-mono overflow-auto max-h-48 bg-[var(--bg)] p-3 rounded">
+                    {JSON.stringify(definition, null, 2)}
+                  </pre>
+                </div>
+              ) : null}
               
               {/* Current State Info */}
               <div className="bg-[var(--bg-elevated)] rounded-lg p-4">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { Agent } from '../lib/queries';
 
 interface TopAgentsProps {
@@ -7,8 +7,6 @@ interface TopAgentsProps {
 }
 
 export function TopAgents({ agents, onAgentClick }: TopAgentsProps) {
-  const [sortBy, setSortBy] = useState<'reputation' | 'jobs'>('reputation');
-
   // Generate consistent avatar colors based on address
   const getAvatarColor = (address: string) => {
     const colors = [
@@ -32,19 +30,10 @@ export function TopAgents({ agents, onAgentClick }: TopAgentsProps) {
     return address.slice(3, 5).toUpperCase();
   };
 
-  // Simulate job counts based on reputation (for demo)
-  const getJobCount = (reputation: number) => {
-    return Math.floor(reputation * 3.7 + 17);
-  };
-
+  // Sort by reputation (highest first)
   const sortedAgents = useMemo(() => {
-    return [...agents].sort((a, b) => {
-      if (sortBy === 'jobs') {
-        return getJobCount(b.reputation) - getJobCount(a.reputation);
-      }
-      return b.reputation - a.reputation;
-    });
-  }, [agents, sortBy]);
+    return [...agents].sort((a, b) => b.reputation - a.reputation);
+  }, [agents]);
 
   const loading = agents.length === 0;
 
@@ -54,28 +43,7 @@ export function TopAgents({ agents, onAgentClick }: TopAgentsProps) {
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span>🏆</span> Top Agents
         </h2>
-        <div className="flex gap-1 bg-[var(--bg-elevated)] rounded-lg p-1">
-          <button
-            onClick={() => setSortBy('reputation')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-              sortBy === 'reputation'
-                ? 'bg-[var(--accent)] text-white'
-                : 'text-[var(--text-muted)] hover:text-white'
-            }`}
-          >
-            Reputation
-          </button>
-          <button
-            onClick={() => setSortBy('jobs')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-              sortBy === 'jobs'
-                ? 'bg-[var(--accent)] text-white'
-                : 'text-[var(--text-muted)] hover:text-white'
-            }`}
-          >
-            Jobs
-          </button>
-        </div>
+        <span className="text-xs text-[var(--text-muted)]">by reputation</span>
       </div>
 
       <div className="space-y-2">
@@ -84,39 +52,36 @@ export function TopAgents({ agents, onAgentClick }: TopAgentsProps) {
             <div key={i} className="h-12 bg-[var(--bg-elevated)] rounded-lg animate-pulse" />
           ))
         ) : (
-          sortedAgents.slice(0, 8).map((agent, index) => {
-            const jobCount = getJobCount(agent.reputation);
-            return (
-              <div
-                key={agent.address}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-elevated)] cursor-pointer transition-colors"
-                onClick={() => onAgentClick(agent.address)}
-              >
-                <span className="text-sm font-medium text-[var(--text-muted)] w-5">
-                  #{index + 1}
-                </span>
-                
-                {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarColor(agent.address)} flex items-center justify-center text-white text-xs font-bold`}>
-                  {getInitials(agent.displayName, agent.address)}
+          sortedAgents.slice(0, 8).map((agent, index) => (
+            <div
+              key={agent.address}
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-elevated)] cursor-pointer transition-colors"
+              onClick={() => onAgentClick(agent.address)}
+            >
+              <span className="text-sm font-medium text-[var(--text-muted)] w-5">
+                #{index + 1}
+              </span>
+              
+              {/* Avatar */}
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarColor(agent.address)} flex items-center justify-center text-white text-xs font-bold`}>
+                {getInitials(agent.displayName, agent.address)}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm truncate">
+                  {agent.displayName || `${agent.address.slice(0, 10)}...`}
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">
-                    {agent.displayName || `${agent.address.slice(0, 10)}...`}
-                  </div>
-                  <div className="text-xs text-[var(--text-muted)] mono">
-                    {agent.address.slice(0, 8)}...
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className="font-bold text-sm gradient-text">+{agent.reputation.toLocaleString()}</div>
-                  <div className="text-xs text-[var(--text-muted)]">{jobCount} jobs</div>
+                <div className="text-xs text-[var(--text-muted)] mono">
+                  {agent.address.slice(0, 8)}...
                 </div>
               </div>
-            );
-          })
+              
+              <div className="text-right">
+                <div className="font-bold text-sm gradient-text">+{agent.reputation.toLocaleString()}</div>
+                <div className="text-xs text-[var(--text-muted)]">rep</div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>
