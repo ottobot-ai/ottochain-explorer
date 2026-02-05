@@ -53,33 +53,39 @@ export function ActivityFeed({ events, loading, onAgentClick }: ActivityFeedProp
         <p className="text-[var(--text-muted)] text-center py-8">No activity yet</p>
       ) : (
         <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
-          {events?.map((event, index) => (
-            <div
-              key={`${event.timestamp}-${index}`}
-              className="flex items-start gap-3 p-3 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg)] transition-colors"
-            >
-              <span className="text-lg">{getEventIcon(event.eventType)}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span 
-                    className="font-medium truncate text-[var(--accent)] hover:underline cursor-pointer"
-                    onClick={() => onAgentClick?.(event.agent.address)}
-                  >
-                    {event.agent.displayName || `${event.agent.address.slice(0, 8)}...`}
-                  </span>
-                  {event.reputationDelta !== null && (
-                    <span className={`text-sm font-mono ${getDeltaColor(event.reputationDelta)}`}>
-                      {event.reputationDelta > 0 ? '+' : ''}{event.reputationDelta}
+          {events?.map((event, index) => {
+            const agentLabel = event.agent 
+              ? (event.agent.displayName || `${event.agent.address.slice(0, 8)}...`)
+              : event.action || 'System';
+            
+            return (
+              <div
+                key={`${event.timestamp}-${index}`}
+                className="flex items-start gap-3 p-3 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg)] transition-colors"
+              >
+                <span className="text-lg">{getEventIcon(event.eventType)}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className={`font-medium truncate ${event.agent ? 'text-[var(--accent)] hover:underline cursor-pointer' : 'text-[var(--text-primary)]'}`}
+                      onClick={() => event.agent && onAgentClick?.(event.agent.address)}
+                    >
+                      {agentLabel}
                     </span>
-                  )}
+                    {event.reputationDelta !== null && (
+                      <span className={`text-sm font-mono ${getDeltaColor(event.reputationDelta)}`}>
+                        {event.reputationDelta > 0 ? '+' : ''}{event.reputationDelta}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-[var(--text-muted)]">{event.action}</div>
                 </div>
-                <div className="text-sm text-[var(--text-muted)]">{event.action}</div>
+                <div className="text-xs text-[var(--text-muted)] whitespace-nowrap">
+                  {formatTime(event.timestamp)}
+                </div>
               </div>
-              <div className="text-xs text-[var(--text-muted)] whitespace-nowrap">
-                {formatTime(event.timestamp)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
