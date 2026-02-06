@@ -4,6 +4,14 @@ import { useQuery } from '@apollo/client/react';
 import { FiberStateViewer } from './FiberStateViewer';
 import { CopyAddress } from './CopyAddress';
 
+// Helper to extract value from wrapped objects like {value: "REGISTERED"}
+const unwrapValue = (val: unknown): string => {
+  if (val && typeof val === 'object' && 'value' in val) {
+    return String((val as { value: unknown }).value);
+  }
+  return String(val ?? '');
+};
+
 const GET_FIBER = gql`
   query GetFiber($fiberId: String!) {
     fiber(fiberId: $fiberId) {
@@ -241,12 +249,24 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
 
   const fiber = data.fiber;
   const transitions = data.fiberTransitions || [];
-  const stateData = typeof fiber.stateData === 'string' ? JSON.parse(fiber.stateData) : fiber.stateData;
-  const definition = typeof fiber.definition === 'string' ? JSON.parse(fiber.definition) : fiber.definition;
+  
+  // Safe JSON parsing with fallbacks
+  const parseJsonSafely = (data: string | Record<string, unknown>, fallback = {}) => {
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      console.warn('Failed to parse JSON:', data, e);
+      return fallback;
+    }
+  };
+  
+  const stateData = parseJsonSafely(fiber.stateData);
+  const definition = parseJsonSafely(fiber.definition);
 
   // Determine which schema-specific view to use
   const renderStateView = () => {
-    switch (fiber.workflowType) {
+    switch (unwrapValue(fiber.workflowType)) {
       case 'AgentIdentity':
         return <AgentIdentityView stateData={stateData} onAgentClick={onAgentClick} />;
       case 'Contract':
@@ -270,8 +290,8 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-3">
-            <span className={`px-2 py-1 rounded text-xs font-medium ${getWorkflowBadgeColor(fiber.workflowType)}`}>
-              {fiber.workflowType}
+            <span className={`px-2 py-1 rounded text-xs font-medium ${getWorkflowBadgeColor(unwrapValue(fiber.workflowType))}`}>
+              {unwrapValue(fiber.workflowType)}
             </span>
             <div>
               <div className="font-mono text-sm">{fiber.fiberId}</div>
@@ -314,7 +334,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
               {definition && definition.initialState && definition.states ? (
                 <FiberStateViewer 
                   definition={definition} 
-                  currentState={fiber.currentState}
+                  currentState={unwrapValue(fiber.currentState)}
                 />
               ) : definition ? (
                 <div className="bg-[var(--bg-elevated)] rounded-lg p-4">
@@ -332,7 +352,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium">Current State</h3>
                   <span className="px-2 py-1 bg-[var(--accent)] rounded text-xs font-medium">
-                    {fiber.currentState}
+                    {unwrapValue(fiber.currentState)}
                   </span>
                 </div>
                 {renderStateView()}
