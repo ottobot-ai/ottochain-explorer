@@ -44,12 +44,15 @@ export function AgentSearch({ initialSelectedAgent }: AgentSearchProps) {
 
   const agents = activeSearch && searchResults ? searchResults.searchAgents : allAgents?.agents;
 
+  // State colors aligned with SDK AgentState enum
   const getStateColor = (state: Agent['state']) => {
     switch (state) {
       case 'ACTIVE': return 'bg-[var(--green)]';
-      case 'PENDING': return 'bg-[var(--orange)]';
-      case 'PROBATION': return 'bg-[var(--orange)]';
+      case 'REGISTERED': return 'bg-yellow-500';
+      case 'CHALLENGED': return 'bg-orange-500';
+      case 'PROBATION': return 'bg-purple-500';
       case 'SUSPENDED': return 'bg-[var(--red)]';
+      case 'WITHDRAWN': return 'bg-gray-600';
       default: return 'bg-[var(--text-muted)]';
     }
   };

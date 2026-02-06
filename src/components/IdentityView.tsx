@@ -3,6 +3,7 @@ import { exportToCSV, exportToJSON } from '../lib/export';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { AgentAvatar } from './AgentAvatar';
+import type { AgentState, FiberStatus } from '../lib/queries';
 
 const AGENTS_QUERY = gql`
   query Agents($limit: Int, $orderBy: AgentOrderBy) {
@@ -34,6 +35,7 @@ const AGENT_FIBERS_QUERY = gql`
       fiberId
       workflowType
       currentState
+      status
       sequenceNumber
       updatedAt
     }
@@ -44,7 +46,7 @@ interface Agent {
   address: string;
   displayName: string | null;
   reputation: number;
-  state: string;
+  state: AgentState;
   createdAt: string;
   platformLinks: Array<{
     platform: string;
@@ -64,8 +66,13 @@ interface Fiber {
   fiberId: string;
   workflowType: string;
   currentState: string;
+  status: FiberStatus;
   sequenceNumber: number;
   updatedAt: string;
+}
+
+interface IdentityViewProps {
+  onFiberClick?: (fiberId: string) => void;
 }
 
 // Query response types
@@ -85,13 +92,26 @@ const platformIcons: Record<string, string> = {
   CUSTOM: '🔗',
 };
 
-const stateColors: Record<string, string> = {
+// State colors aligned with SDK AgentState enum
+const stateColors: Record<AgentState, string> = {
+  UNSPECIFIED: 'bg-gray-500/20 text-gray-400',
   REGISTERED: 'bg-yellow-500/20 text-yellow-400',
   ACTIVE: 'bg-green-500/20 text-green-400',
-  WITHDRAWN: 'bg-red-500/20 text-red-400',
+  CHALLENGED: 'bg-orange-500/20 text-orange-400',
+  SUSPENDED: 'bg-red-500/20 text-red-400',
+  PROBATION: 'bg-purple-500/20 text-purple-400',
+  WITHDRAWN: 'bg-gray-600/20 text-gray-500',
 };
 
-export function IdentityView() {
+// Fiber status colors aligned with SDK FiberStatus enum
+const fiberStatusColors: Record<FiberStatus, string> = {
+  UNSPECIFIED: 'bg-gray-500/20 text-gray-400',
+  ACTIVE: 'bg-green-500/20 text-green-400',
+  ARCHIVED: 'bg-blue-500/20 text-blue-400',
+  FAILED: 'bg-red-500/20 text-red-400',
+};
+
+export function IdentityView({ onFiberClick }: IdentityViewProps) {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('REPUTATION_DESC');
 
@@ -338,13 +358,22 @@ export function IdentityView() {
                   <div className="text-xs text-[var(--text-muted)] mb-2">Owned Fibers</div>
                   <div className="space-y-2">
                     {agentFibers.map((fiber) => (
-                      <div key={fiber.fiberId} className="flex items-center justify-between text-xs bg-[var(--bg-elevated)] p-2 rounded-lg">
-                        <div>
+                      <button
+                        key={fiber.fiberId}
+                        onClick={() => onFiberClick?.(fiber.fiberId)}
+                        className="w-full flex items-center justify-between text-xs bg-[var(--bg-elevated)] p-2 rounded-lg hover:border-[var(--accent)] border border-transparent transition-colors cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-2">
                           <span className="text-[var(--accent)]">{fiber.workflowType}</span>
-                          <span className="text-[var(--text-muted)] ml-2">#{fiber.sequenceNumber}</span>
+                          <span className="text-[var(--text-muted)]">#{fiber.sequenceNumber}</span>
                         </div>
-                        <span className="text-[var(--text-muted)]">{fiber.currentState}</span>
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-1.5 py-0.5 rounded text-xs ${fiberStatusColors[fiber.status] || fiberStatusColors.UNSPECIFIED}`}>
+                            {fiber.status}
+                          </span>
+                          <span className="text-[var(--text-muted)]">{fiber.currentState}</span>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>

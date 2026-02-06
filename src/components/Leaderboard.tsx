@@ -8,12 +8,15 @@ interface LeaderboardProps {
 }
 
 export function Leaderboard({ agents, loading, onAgentClick }: LeaderboardProps) {
+  // State colors aligned with SDK AgentState enum
   const getStateColor = (state: Agent['state']) => {
     switch (state) {
       case 'ACTIVE': return 'text-[var(--green)]';
-      case 'PENDING': return 'text-[var(--orange)]';
-      case 'PROBATION': return 'text-[var(--orange)]';
+      case 'REGISTERED': return 'text-yellow-400';
+      case 'CHALLENGED': return 'text-orange-400';
+      case 'PROBATION': return 'text-purple-400';
       case 'SUSPENDED': return 'text-[var(--red)]';
+      case 'WITHDRAWN': return 'text-gray-500';
       default: return 'text-[var(--text-muted)]';
     }
   };

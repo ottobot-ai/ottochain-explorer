@@ -229,6 +229,43 @@ export const AGENT_UPDATED_SUB = gql`
 `;
 
 // ============ TYPES ============
+// Types aligned with ottochain-sdk protobuf definitions (source of truth)
+
+/**
+ * Agent lifecycle states - matches AgentState enum from SDK
+ * @see ottochain-sdk/src/generated/ottochain/apps/identity/v1/agent_pb.ts
+ */
+export type AgentState = 
+  | 'UNSPECIFIED'
+  | 'REGISTERED'   // Initial state after registration (was incorrectly 'PENDING')
+  | 'ACTIVE'       // Activated and participating
+  | 'CHALLENGED'   // Under dispute/challenge
+  | 'SUSPENDED'    // Challenge upheld, temporarily suspended
+  | 'PROBATION'    // Recovering from suspension
+  | 'WITHDRAWN';   // Voluntarily exited (terminal)
+
+/**
+ * Contract lifecycle states - matches ContractState enum from SDK
+ * @see ottochain-sdk/src/generated/ottochain/apps/contracts/v1/contract_pb.ts
+ */
+export type ContractState =
+  | 'UNSPECIFIED'
+  | 'PROPOSED'     // Awaiting counterparty acceptance
+  | 'ACTIVE'       // Both parties agreed, in progress
+  | 'COMPLETED'    // Successfully fulfilled (terminal)
+  | 'REJECTED'     // Counterparty declined (terminal)
+  | 'DISPUTED'     // Under dispute resolution
+  | 'CANCELLED';   // Cancelled by proposer before acceptance (terminal)
+
+/**
+ * Fiber lifecycle status - matches FiberStatus enum from SDK
+ * @see ottochain-sdk/src/generated/ottochain/v1/fiber_pb.ts
+ */
+export type FiberStatus =
+  | 'UNSPECIFIED'
+  | 'ACTIVE'       // Fiber is live and processing
+  | 'ARCHIVED'     // Fiber is archived (terminal state reached)
+  | 'FAILED';      // Fiber encountered a fatal error
 
 export interface NetworkStats {
   totalAgents: number;
@@ -252,7 +289,7 @@ export interface AgentContract {
   contractId: string;
   proposer?: { address: string; displayName: string | null };
   counterparty?: { address: string; displayName: string | null };
-  state: 'PROPOSED' | 'ACTIVE' | 'COMPLETED' | 'REJECTED' | 'DISPUTED';
+  state: ContractState;
   proposedAt: string;
   completedAt: string | null;
 }
@@ -261,7 +298,7 @@ export interface AgentFiber {
   fiberId: string;
   workflowType: string;
   currentState: string;
-  status: string;
+  status: FiberStatus;
   sequenceNumber: number;
   updatedAt: string;
 }
@@ -271,7 +308,7 @@ export interface Agent {
   publicKey: string;
   displayName: string | null;
   reputation: number;
-  state: 'PENDING' | 'ACTIVE' | 'PROBATION' | 'SUSPENDED';
+  state: AgentState;
   createdAt: string;
   platformLinks?: PlatformLink[];
   attestationsReceived?: Attestation[];
@@ -281,7 +318,7 @@ export interface Agent {
 }
 
 export interface PlatformLink {
-  platform: 'DISCORD' | 'TELEGRAM' | 'TWITTER' | 'GITHUB';
+  platform: 'DISCORD' | 'TELEGRAM' | 'TWITTER' | 'GITHUB' | 'CUSTOM';
   platformUserId: string;
   platformUsername: string | null;
   verified: boolean;
@@ -304,7 +341,7 @@ export interface Contract {
   contractId: string;
   proposer: Agent;
   counterparty: Agent;
-  state: 'PROPOSED' | 'ACCEPTED' | 'COMPLETED' | 'REJECTED' | 'DISPUTED';
+  state: ContractState;
   terms: Record<string, unknown>;
   proposedAt: string;
   acceptedAt: string | null;

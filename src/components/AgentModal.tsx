@@ -32,11 +32,15 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
   const completedContracts = allContracts.filter(c => c.state === 'COMPLETED').length;
   const activeContracts = allContracts.filter(c => c.state === 'ACTIVE' || c.state === 'PROPOSED').length;
 
+  // State colors aligned with SDK AgentState enum
   const getStateColor = (state: string) => {
     switch (state) {
       case 'ACTIVE': return 'text-[var(--green)]';
-      case 'REGISTERED': return 'text-[var(--orange)]';
-      case 'WITHDRAWN': return 'text-[var(--red)]';
+      case 'REGISTERED': return 'text-yellow-400';
+      case 'CHALLENGED': return 'text-orange-400';
+      case 'SUSPENDED': return 'text-[var(--red)]';
+      case 'PROBATION': return 'text-purple-400';
+      case 'WITHDRAWN': return 'text-gray-500';
       default: return 'text-[var(--text-muted)]';
     }
   };
@@ -237,28 +241,44 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
                   {fibers.length === 0 ? (
                     <p className="text-[var(--text-muted)] py-4 text-center">No fibers owned</p>
                   ) : (
-                    fibers.map(fiber => (
-                      <button
-                        key={fiber.fiberId}
-                        onClick={() => onFiberClick?.(fiber.fiberId)}
-                        className="w-full p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] text-left hover:border-[var(--accent)] transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-400">
-                            {fiber.workflowType}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            fiber.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                          }`}>{fiber.currentState}</span>
-                        </div>
-                        <div className="text-sm font-mono text-[var(--text-muted)] truncate">
-                          {fiber.fiberId}
-                        </div>
-                        <div className="text-xs text-[var(--text-muted)] mt-1">
-                          Seq #{fiber.sequenceNumber} • {new Date(fiber.updatedAt).toLocaleDateString()}
-                        </div>
-                      </button>
-                    ))
+                    fibers.map(fiber => {
+                      // Fiber status colors aligned with SDK FiberStatus enum
+                      const getStatusColor = (status: string) => {
+                        switch (status) {
+                          case 'ACTIVE': return 'bg-green-500/20 text-green-400';
+                          case 'ARCHIVED': return 'bg-blue-500/20 text-blue-400';
+                          case 'FAILED': return 'bg-red-500/20 text-red-400';
+                          default: return 'bg-gray-500/20 text-gray-400';
+                        }
+                      };
+                      return (
+                        <button
+                          key={fiber.fiberId}
+                          onClick={() => onFiberClick?.(fiber.fiberId)}
+                          className="w-full p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] text-left hover:border-[var(--accent)] transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-400">
+                              {fiber.workflowType}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(fiber.status)}`}>
+                                {fiber.status}
+                              </span>
+                              <span className="text-xs text-[var(--text-muted)]">
+                                {fiber.currentState}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-sm font-mono text-[var(--text-muted)] truncate">
+                            {fiber.fiberId}
+                          </div>
+                          <div className="text-xs text-[var(--text-muted)] mt-1">
+                            Seq #{fiber.sequenceNumber} • {new Date(fiber.updatedAt).toLocaleDateString()}
+                          </div>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               )}
