@@ -5,6 +5,14 @@ import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { FiberStateViewer } from './FiberStateViewer';
 
+// Helper to extract value from wrapped objects like {value: "REGISTERED"}
+const unwrapValue = (val: unknown): string => {
+  if (val && typeof val === 'object' && 'value' in val) {
+    return String((val as { value: unknown }).value);
+  }
+  return String(val ?? '');
+};
+
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
     workflowTypes {
@@ -355,18 +363,18 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(fiber.workflowType)}`}>
-                          {fiber.workflowType}
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(unwrapValue(fiber.workflowType))}`}>
+                          {unwrapValue(fiber.workflowType)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(fiber.currentState)}`}>
-                          {fiber.currentState}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(unwrapValue(fiber.currentState))}`}>
+                          {unwrapValue(fiber.currentState)}
                         </span>
                       </div>
                       <div className="text-sm font-mono text-[var(--text-muted)] mt-1 truncate">
-                        {fiber.fiberId}
+                        {unwrapValue(fiber.fiberId)}
                       </div>
                       <div className="text-xs text-[var(--text-muted)] mt-1">
-                        Owner: {fiber.owners[0]?.slice(0, 12)}... • Seq #{fiber.sequenceNumber}
+                        Owner: {unwrapValue(fiber.owners?.[0])?.slice(0, 12)}... • Seq #{fiber.sequenceNumber}
                       </div>
                     </div>
                     <div className="text-xs text-[var(--text-muted)]">
@@ -395,126 +403,177 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
             </div>
           ) : (
             <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
-              {/* Type & State */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(detail.workflowType)}`}>
-                    {detail.workflowType}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(detail.currentState)}`}>
-                    {detail.currentState}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    detail.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                  }`}>
-                    {detail.status}
-                  </span>
-                </div>
-                <div className="text-xs font-mono text-[var(--text-muted)] break-all">
-                  {detail.fiberId}
-                </div>
-              </div>
-
-              {/* Owner */}
-              <div>
-                <div className="text-xs text-[var(--text-muted)] mb-1">Owner</div>
-                <div className="text-sm font-mono text-[var(--text-primary)] break-all">
-                  {detail.owners[0]}
-                </div>
-              </div>
-
-              {/* Sequence & Timestamps */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-[var(--text-muted)] mb-1">Sequence</div>
-                  <div className="text-lg font-bold text-[var(--text-primary)]">#{detail.sequenceNumber}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-[var(--text-muted)] mb-1">Created</div>
-                  <div className="text-sm text-[var(--text-primary)]">
-                    {new Date(detail.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-
-              {/* State Data */}
-              {detail.stateData && Object.keys(detail.stateData).length > 0 && (
-                <div>
-                  <div className="text-xs text-[var(--text-muted)] mb-2">State Data</div>
-                  <pre className="text-xs bg-[var(--bg-elevated)] p-3 rounded-lg overflow-x-auto">
-                    {JSON.stringify(detail.stateData, null, 2)}
-                  </pre>
-                </div>
-              )}
-
-              {/* State Machine Visualization */}
-              {detail.definition && 'initialState' in detail.definition && (
-                <FiberStateViewer 
-                  definition={detail.definition as unknown as {
-                    metadata?: { name?: string; description?: string };
-                    initialState: string;
-                    states: Record<string, {
-                      name: string;
-                      metadata?: { description?: string };
-                      actions?: Array<{ eventName: string; target: string; guards?: unknown[] }>;
-                    }>;
-                  }}
-                  currentState={detail.currentState}
-                  className="max-h-48"
-                />
-              )}
-
-              {/* State Machine Diagram (fallback for old format) */}
-              {detail.definition?.states && !('initialState' in detail.definition) && (
-                <div>
-                  <div className="text-xs text-[var(--text-muted)] mb-2">States</div>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(detail.definition.states).map(([key, state]) => (
-                      <span
-                        key={key}
-                        className={`text-xs px-2 py-1 rounded-full border ${
-                          detail.currentState === state.id.value
-                            ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--accent)]'
-                            : state.isFinal
-                            ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                            : 'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]'
-                        }`}
-                      >
-                        {state.id.value} {state.isFinal && '✓'}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recent Transitions */}
-              {detail.transitions && detail.transitions.length > 0 && (
-                <div>
-                  <div className="text-xs text-[var(--text-muted)] mb-2">Recent Transitions</div>
-                  <div className="space-y-2">
-                    {detail.transitions.map((t, i) => (
-                      <div key={i} className="text-xs bg-[var(--bg-elevated)] p-2 rounded-lg">
-                        <div className="flex items-center gap-1">
-                          <span className="text-[var(--text-muted)]">{t.fromState}</span>
-                          <span className="text-[var(--accent)]">→</span>
-                          <span className="text-[var(--text-primary)]">{t.toState}</span>
+              {(() => {
+                try {
+                  // Safe JSON parsing for detail data
+                  const parseJsonSafely = (data: any, fallback = {}) => {
+                    if (typeof data !== 'string') return data;
+                    try {
+                      return JSON.parse(data);
+                    } catch (e) {
+                      console.warn('Failed to parse JSON:', data, e);
+                      return fallback;
+                    }
+                  };
+                  
+                  const safeStateData = parseJsonSafely(detail.stateData);
+                  
+                  return (
+                    <>
+                      {/* Type & State */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(unwrapValue(detail.workflowType) || 'Unknown')}`}>
+                            {unwrapValue(detail.workflowType) || 'Unknown'}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(unwrapValue(detail.currentState) || 'unknown')}`}>
+                            {unwrapValue(detail.currentState) || 'Unknown'}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            unwrapValue(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {unwrapValue(detail.status) || 'Unknown'}
+                          </span>
                         </div>
-                        <div className="text-[var(--text-muted)] mt-1">
-                          {t.eventName} • {t.success ? '✓' : '✗'} • {t.gasUsed} gas
+                        <div className="text-xs font-mono text-[var(--text-muted)] break-all">
+                          {unwrapValue(detail.fiberId)}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Expand Button */}
-              <button
-                onClick={() => setModalFiber(detail.fiberId)}
-                className="w-full py-2 mt-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] rounded-lg text-sm font-medium transition-colors"
-              >
-                View Full Details →
-              </button>
+                      {/* Owner */}
+                      <div>
+                        <div className="text-xs text-[var(--text-muted)] mb-1">Owner</div>
+                        <div className="text-sm font-mono text-[var(--text-primary)] break-all">
+                          {unwrapValue(detail.owners?.[0]) || 'Unknown'}
+                        </div>
+                      </div>
+
+                      {/* Sequence & Timestamps */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs text-[var(--text-muted)] mb-1">Sequence</div>
+                          <div className="text-lg font-bold text-[var(--text-primary)]">#{detail.sequenceNumber || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-[var(--text-muted)] mb-1">Created</div>
+                          <div className="text-sm text-[var(--text-primary)]">
+                            {detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : 'Unknown'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* State Data */}
+                      {safeStateData && typeof safeStateData === 'object' && Object.keys(safeStateData).length > 0 && (
+                        <div>
+                          <div className="text-xs text-[var(--text-muted)] mb-2">State Data</div>
+                          <pre className="text-xs bg-[var(--bg-elevated)] p-3 rounded-lg overflow-x-auto">
+                            {JSON.stringify(safeStateData, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </>
+                  );
+                } catch (error) {
+                  console.error('Error rendering fiber detail:', error);
+                  return (
+                    <div className="p-4 text-center text-[var(--red)]">
+                      Error loading fiber details
+                      <div className="text-xs text-[var(--text-muted)] mt-2">
+                        Check console for details
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
+
+              {/* State Machine Visualization and other sections now handled in try-catch above */}
+              {(() => {
+                try {
+                  const parseJsonSafely = (data: any, fallback = {}) => {
+                    if (typeof data !== 'string') return data;
+                    try {
+                      return JSON.parse(data);
+                    } catch (e) {
+                      console.warn('Failed to parse JSON:', data, e);
+                      return fallback;
+                    }
+                  };
+                  
+                  const safeDefinition = parseJsonSafely(detail.definition);
+                  
+                  return (
+                    <>
+                      {/* State Machine Visualization */}
+                      {safeDefinition && typeof safeDefinition === 'object' && 'initialState' in safeDefinition && (
+                        <FiberStateViewer 
+                          definition={safeDefinition as any}
+                          currentState={unwrapValue(detail.currentState)}
+                          className="max-h-48"
+                        />
+                      )}
+
+                      {/* State Machine Diagram (fallback for old format) */}
+                      {safeDefinition?.states && !('initialState' in safeDefinition) && (
+                        <div>
+                          <div className="text-xs text-[var(--text-muted)] mb-2">States</div>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(safeDefinition.states).map(([key, state]: [string, any]) => (
+                              <span
+                                key={key}
+                                className={`text-xs px-2 py-1 rounded-full border ${
+                                  unwrapValue(detail.currentState) === unwrapValue(state?.id)
+                                    ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--accent)]'
+                                    : state?.isFinal
+                                    ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                                    : 'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]'
+                                }`}
+                              >
+                                {unwrapValue(state?.id) || key} {state?.isFinal && '✓'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recent Transitions */}
+                      {detail.transitions && detail.transitions.length > 0 && (
+                        <div>
+                          <div className="text-xs text-[var(--text-muted)] mb-2">Recent Transitions</div>
+                          <div className="space-y-2">
+                            {detail.transitions.map((t: any, i: number) => (
+                              <div key={i} className="text-xs bg-[var(--bg-elevated)] p-2 rounded-lg">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[var(--text-muted)]">{unwrapValue(t?.fromState) || 'Unknown'}</span>
+                                  <span className="text-[var(--accent)]">→</span>
+                                  <span className="text-[var(--text-primary)]">{unwrapValue(t?.toState) || 'Unknown'}</span>
+                                </div>
+                                <div className="text-[var(--text-muted)] mt-1">
+                                  {t?.eventName || 'Unknown'} • {t?.success ? '✓' : '✗'} • {t?.gasUsed || 0} gas
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Expand Button */}
+                      <button
+                        onClick={() => setModalFiber(detail.fiberId)}
+                        className="w-full py-2 mt-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] rounded-lg text-sm font-medium transition-colors"
+                      >
+                        View Full Details →
+                      </button>
+                    </>
+                  );
+                } catch (error) {
+                  console.error('Error rendering fiber state visualization:', error);
+                  return (
+                    <div className="text-xs text-[var(--red)]">
+                      Error loading state visualization
+                    </div>
+                  );
+                }
+              })()}
             </div>
           )}
         </div>

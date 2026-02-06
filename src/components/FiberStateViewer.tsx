@@ -1,8 +1,18 @@
 import { useMemo, useRef, useState } from 'react';
 
+// Helper to extract value from wrapped objects like {value: "REGISTERED"}
+const unwrapValue = (val: unknown): string => {
+  if (val && typeof val === 'object' && 'value' in val) {
+    return String((val as { value: unknown }).value);
+  }
+  return String(val ?? '');
+};
+
 interface StateDefinition {
-  name: string;
-  metadata?: { description?: string };
+  name?: string;
+  id?: { value: string } | string;
+  isFinal?: boolean;
+  metadata?: { description?: string } | null;
   actions?: Array<{
     eventName: string;
     target: string;
@@ -11,9 +21,14 @@ interface StateDefinition {
 }
 
 interface StateMachineDefinition {
-  metadata?: { name?: string; description?: string };
-  initialState: string;
+  metadata?: { name?: string; description?: string } | null;
+  initialState: string | { value: string };
   states: Record<string, StateDefinition>;
+  transitions?: Array<{
+    eventName: string;
+    from: string | { value: string };
+    to: string | { value: string };
+  }>;
 }
 
 interface FiberStateViewerProps {
@@ -90,17 +105,22 @@ export function FiberStateViewer({
 
   // Calculate node positions in a circular/hierarchical layout
   // Must be called unconditionally (React hooks rule)
-  const { nodes, edges, width, height, isValid } = useMemo(() => {
+  const { nodes, edges, width, height, isValid, initialStateName } = useMemo(() => {
     // Validate definition structure inside useMemo
     if (!definition?.initialState || !definition?.states) {
-      return { nodes: [], edges: [], width: 0, height: 0, isValid: false };
+      return { nodes: [], edges: [], width: 0, height: 0, isValid: false, initialStateName: '' };
     }
+    
+    // Unwrap initialState if it's an object
+    const initialStateName = unwrapValue(definition.initialState);
     
     const states = Object.entries(definition.states);
     const stateNames = states.map(([name]) => name);
     
-    // Build edges from actions
+    // Build edges from actions OR transitions
     const edgeList: Edge[] = [];
+    
+    // Try actions first (old format)
     states.forEach(([fromState, stateDef]) => {
       (stateDef.actions || []).forEach(action => {
         if (stateNames.includes(action.target)) {
@@ -112,13 +132,31 @@ export function FiberStateViewer({
         }
       });
     });
+    
+    // Also check transitions array (new format from API)
+    if (definition.transitions) {
+      definition.transitions.forEach(t => {
+        const from = unwrapValue(t.from);
+        const to = unwrapValue(t.to);
+        if (stateNames.includes(from) && stateNames.includes(to)) {
+          // Avoid duplicates
+          if (!edgeList.some(e => e.from === from && e.to === to && e.label === t.eventName)) {
+            edgeList.push({
+              from,
+              to,
+              label: t.eventName
+            });
+          }
+        }
+      });
+    }
 
     // Calculate positions - use layered layout
     // Group by depth from initial state
     const depths = new Map<string, number>();
     const visited = new Set<string>();
     const queue: Array<{ state: string; depth: number }> = [
-      { state: definition.initialState, depth: 0 }
+      { state: initialStateName, depth: 0 }
     ];
 
     while (queue.length > 0) {
@@ -174,7 +212,8 @@ export function FiberStateViewer({
       edges: edgeList,
       width: svgWidth,
       height: svgHeight,
-      isValid: true
+      isValid: true,
+      initialStateName
     };
   }, [definition]);
 
@@ -325,7 +364,7 @@ export function FiberStateViewer({
           {/* State nodes */}
           {nodes.map(node => {
             const isCurrent = node.state === currentState;
-            const isInitial = node.state === definition.initialState;
+            const isInitial = node.state === initialStateName;
             const isHovered = hoveredState === node.state;
             const stateInfo = definition.states[node.state];
 
