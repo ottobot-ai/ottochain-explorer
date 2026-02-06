@@ -227,7 +227,7 @@ function App() {
         )}
         
         {view === 'identity' && (
-          <IdentityView />
+          <IdentityView onFiberClick={handleFiberSelect} />
         )}
         
         {view === 'contracts' && (

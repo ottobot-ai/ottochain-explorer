@@ -150,14 +150,16 @@ export function InteractionGraph({ onAgentClick, width = 600, height = 400 }: In
     return { nodes, links };
   }, [data]);
 
-  // Color based on agent state
+  // Color based on agent state - aligned with SDK AgentState enum
   const getNodeColor = useCallback((node: GraphNode) => {
     switch (node.state) {
-      case 'ACTIVE': return '#22c55e';
-      case 'PENDING': return '#f97316';
-      case 'PROBATION': return '#eab308';
-      case 'SUSPENDED': return '#ef4444';
-      default: return '#a855f7';
+      case 'ACTIVE': return '#22c55e';     // green
+      case 'REGISTERED': return '#eab308'; // yellow
+      case 'CHALLENGED': return '#f97316'; // orange
+      case 'PROBATION': return '#a855f7';  // purple
+      case 'SUSPENDED': return '#ef4444';  // red
+      case 'WITHDRAWN': return '#6b7280';  // gray
+      default: return '#9ca3af';           // light gray
     }
   }, []);
 
