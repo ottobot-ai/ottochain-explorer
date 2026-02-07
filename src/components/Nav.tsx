@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
-  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets';
-  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets') => void;
+  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'dao';
+  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'dao') => void;
   onAgentSelect?: (address: string) => void;
   onFiberSelect?: (fiberId: string) => void;
+  onDAOSelect?: (daoId: string) => void;
 }
 
 type Network = 'mainnet' | 'testnet' | 'devnet';
@@ -16,7 +17,9 @@ const networks: { id: Network; label: string; color: string }[] = [
   { id: 'devnet', label: 'Devnet', color: 'blue' },
 ];
 
-export function Nav({ view, setView, onAgentSelect, onFiberSelect }: NavProps) {
+export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: _onDAOSelect }: NavProps) {
+  // onDAOSelect is available for future GlobalSearch DAO integration
+  void _onDAOSelect;
   const [network, setNetwork] = useState<Network>('devnet');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
@@ -110,6 +113,14 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect }: NavProps) {
             }`}
           >
             📊 Markets
+          </button>
+          <button
+            onClick={() => setView('dao')}
+            className={`text-sm font-medium transition-colors ${
+              view === 'dao' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+            }`}
+          >
+            🏛️ DAOs
           </button>
           <a href="https://github.com/scasplte2/ottochain" target="_blank" rel="noopener" className="text-sm text-[var(--text-muted)] hover:text-white transition-colors">
             Docs
@@ -227,6 +238,17 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect }: NavProps) {
                 }`}
               >
                 📊 Markets
+              </button>
+              <button
+                onClick={() => {
+                  setView('dao');
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-sm font-medium transition-colors ${
+                  view === 'dao' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+                }`}
+              >
+                🏛️ DAOs
               </button>
               <a href="https://github.com/scasplte2/ottochain" target="_blank" rel="noopener" className="text-sm text-[var(--text-muted)] hover:text-white transition-colors">
                 Docs

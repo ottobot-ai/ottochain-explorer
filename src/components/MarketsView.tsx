@@ -621,6 +621,158 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
                                 </div>
                               </div>
                             )}
+                            
+                            {/* Participants / Bids / Commitments */}
+                            {safeStateData.participants && Array.isArray(safeStateData.participants) && safeStateData.participants.length > 0 && (
+                              <div>
+                                <div className="text-xs text-[var(--text-muted)] mb-2">Participants ({safeStateData.participants.length})</div>
+                                <div className="space-y-1 max-h-32 overflow-y-auto">
+                                  {safeStateData.participants.map((p: any, i: number) => (
+                                    <div key={i} className="flex items-center justify-between text-xs bg-[var(--bg-elevated)] p-2 rounded">
+                                      <span className="font-mono text-[var(--text-muted)]">
+                                        {(p.address || p.bidder || p).slice(0, 12)}...
+                                      </span>
+                                      {(p.amount || p.bid) && (
+                                        <span className="text-[var(--accent)]">
+                                          {(p.amount || p.bid).toLocaleString()} DAG
+                                        </span>
+                                      )}
+                                      {p.option && (
+                                        <span className="text-purple-400">{p.option}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Bids (for auctions) */}
+                            {safeStateData.bids && Array.isArray(safeStateData.bids) && safeStateData.bids.length > 0 && (
+                              <div>
+                                <div className="text-xs text-[var(--text-muted)] mb-2">Bids ({safeStateData.bids.length})</div>
+                                <div className="space-y-1 max-h-32 overflow-y-auto">
+                                  {safeStateData.bids.slice().sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0)).map((bid: any, i: number) => (
+                                    <div key={i} className={`flex items-center justify-between text-xs p-2 rounded ${i === 0 ? 'bg-green-500/10 border border-green-500/30' : 'bg-[var(--bg-elevated)]'}`}>
+                                      <div className="flex items-center gap-2">
+                                        {i === 0 && <span className="text-green-400">👑</span>}
+                                        <span className="font-mono text-[var(--text-muted)]">
+                                          {(bid.bidder || bid.address).slice(0, 12)}...
+                                        </span>
+                                      </div>
+                                      <span className={i === 0 ? 'text-green-400 font-medium' : 'text-[var(--text-primary)]'}>
+                                        {bid.amount.toLocaleString()} DAG
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Commitments (for crowdfund/group buy) */}
+                            {safeStateData.commitments && Array.isArray(safeStateData.commitments) && safeStateData.commitments.length > 0 && (
+                              <div>
+                                <div className="text-xs text-[var(--text-muted)] mb-2">Commitments ({safeStateData.commitments.length})</div>
+                                <div className="space-y-1 max-h-32 overflow-y-auto">
+                                  {safeStateData.commitments.map((c: any, i: number) => (
+                                    <div key={i} className="flex items-center justify-between text-xs bg-[var(--bg-elevated)] p-2 rounded">
+                                      <span className="font-mono text-[var(--text-muted)]">
+                                        {(c.address || c.backer).slice(0, 12)}...
+                                      </span>
+                                      <span className="text-[var(--accent)]">
+                                        {(c.amount || c.pledge).toLocaleString()} DAG
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                {/* Progress bar for crowdfund */}
+                                {safeStateData.goal && (
+                                  <div className="mt-2">
+                                    <div className="flex justify-between text-xs mb-1">
+                                      <span className="text-[var(--text-muted)]">Progress</span>
+                                      <span className="text-[var(--text-primary)]">
+                                        {safeStateData.totalCommitted?.toLocaleString() || 0} / {safeStateData.goal.toLocaleString()} DAG
+                                      </span>
+                                    </div>
+                                    <div className="h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-green-500 transition-all"
+                                        style={{ width: `${Math.min(100, ((safeStateData.totalCommitted || 0) / safeStateData.goal) * 100)}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Resolution Outcome */}
+                            {(safeStateData.resolution || safeStateData.outcome || safeStateData.winner) && (
+                              <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                                <div className="text-xs text-green-400 mb-1">✓ Resolved</div>
+                                {safeStateData.resolution && (
+                                  <div className="text-sm text-[var(--text-primary)]">
+                                    {safeStateData.resolution}
+                                  </div>
+                                )}
+                                {safeStateData.outcome && (
+                                  <div className="text-sm text-[var(--text-primary)]">
+                                    Outcome: <span className="font-medium text-green-400">{safeStateData.outcome}</span>
+                                  </div>
+                                )}
+                                {safeStateData.winner && (
+                                  <div className="text-sm text-[var(--text-primary)]">
+                                    Winner: <span className="font-mono text-green-400">{safeStateData.winner.slice(0, 16)}...</span>
+                                  </div>
+                                )}
+                                {safeStateData.winningBid && (
+                                  <div className="text-sm text-[var(--text-primary)]">
+                                    Winning Bid: <span className="font-medium text-green-400">{safeStateData.winningBid.toLocaleString()} DAG</span>
+                                  </div>
+                                )}
+                                {safeStateData.resolvedAt && (
+                                  <div className="text-xs text-[var(--text-muted)] mt-1">
+                                    {new Date(safeStateData.resolvedAt).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Timeline */}
+                            <div>
+                              <div className="text-xs text-[var(--text-muted)] mb-2">Timeline</div>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="text-green-400">●</span>
+                                  <span className="text-[var(--text-muted)]">Created</span>
+                                  <span className="text-[var(--text-primary)]">{new Date(detail.createdAt).toLocaleString()}</span>
+                                </div>
+                                {safeStateData.startedAt && (
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-blue-400">●</span>
+                                    <span className="text-[var(--text-muted)]">Started</span>
+                                    <span className="text-[var(--text-primary)]">{new Date(safeStateData.startedAt).toLocaleString()}</span>
+                                  </div>
+                                )}
+                                {safeStateData.deadline && (
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className={new Date(safeStateData.deadline) > new Date() ? 'text-yellow-400' : 'text-red-400'}>●</span>
+                                    <span className="text-[var(--text-muted)]">Deadline</span>
+                                    <span className="text-[var(--text-primary)]">{new Date(safeStateData.deadline).toLocaleString()}</span>
+                                  </div>
+                                )}
+                                {safeStateData.resolvedAt && (
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-purple-400">●</span>
+                                    <span className="text-[var(--text-muted)]">Resolved</span>
+                                    <span className="text-[var(--text-primary)]">{new Date(safeStateData.resolvedAt).toLocaleString()}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="text-gray-400">●</span>
+                                  <span className="text-[var(--text-muted)]">Last Update</span>
+                                  <span className="text-[var(--text-primary)]">{new Date(detail.updatedAt).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}

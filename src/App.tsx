@@ -11,6 +11,7 @@ import { ContractsView } from './components/ContractsView';
 import { FibersView } from './components/FibersView';
 import { IdentityView } from './components/IdentityView';
 import { MarketsView } from './components/MarketsView';
+import { DAOsView } from './components/DAOsView';
 import { StatusBar } from './components/StatusBar';
 import { InteractionGraph } from './components/InteractionGraph';
 // Simplified attestation data for modal display
@@ -26,7 +27,7 @@ interface AttestationModalData {
 }
 
 // Parse URL hash for deep linking
-function parseHash(): { view: string; agent?: string; fiber?: string } {
+function parseHash(): { view: string; agent?: string; fiber?: string; dao?: string } {
   const hash = window.location.hash.slice(1); // Remove #
   if (!hash) return { view: 'dashboard' };
   
@@ -37,17 +38,21 @@ function parseHash(): { view: string; agent?: string; fiber?: string } {
   if (parts[0] === 'fiber' && parts[1]) {
     return { view: 'fibers', fiber: parts[1] };
   }
-  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets'].includes(parts[0])) {
+  if (parts[0] === 'dao' && parts[1]) {
+    return { view: 'dao', dao: parts[1] };
+  }
+  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'dao'].includes(parts[0])) {
     return { view: parts[0] };
   }
   return { view: 'dashboard' };
 }
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'dao'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
   const [modalAttestation, setModalAttestation] = useState<AttestationModalData | null>(null);
   const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
+  const [selectedDAO, setSelectedDAO] = useState<string | null>(null);
   
   // Use shared data from background polling
   const { data, isLoading, refresh, autoUpdate, setAutoUpdate } = useData();
@@ -86,6 +91,12 @@ function App() {
     updateHash(`fiber/${fiberId}`);
   };
 
+  const handleDAOSelect = useCallback((daoId: string) => {
+    setSelectedDAO(daoId);
+    setView('dao');
+    updateHash(`dao/${daoId}`);
+  }, []);
+
   // Handle URL hash changes for deep linking
   useEffect(() => {
     const handleHashChange = () => {
@@ -97,7 +108,11 @@ function App() {
         setSelectedFiber(parsed.fiber);
         setView('fibers');
       }
-      if (parsed.view && !parsed.agent && !parsed.fiber) {
+      if (parsed.dao) {
+        setSelectedDAO(parsed.dao);
+        setView('dao');
+      }
+      if (parsed.view && !parsed.agent && !parsed.fiber && !parsed.dao) {
         setView(parsed.view as typeof view);
       }
     };
@@ -144,6 +159,12 @@ function App() {
           case '4':
             handleViewChange('contracts');
             break;
+          case '5':
+            handleViewChange('markets');
+            break;
+          case '6':
+            handleViewChange('dao');
+            break;
           case 'r':
             if (!e.metaKey && !e.ctrlKey) {
               refresh();
@@ -159,7 +180,7 @@ function App() {
 
   return (
     <div className="min-h-screen pb-16">
-      <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} />
+      <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} onDAOSelect={handleDAOSelect} />
       
       <main className="container mx-auto px-6 pt-24 pb-16">
         {/* Live indicator with controls */}
@@ -237,6 +258,13 @@ function App() {
         
         {view === 'markets' && (
           <MarketsView />
+        )}
+        
+        {view === 'dao' && (
+          <DAOsView 
+            initialDaoId={selectedDAO}
+            onAgentClick={handleAgentClick}
+          />
         )}
       </main>
 
