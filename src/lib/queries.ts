@@ -28,6 +28,30 @@ export const CLUSTER_STATS = gql`
   }
 `;
 
+export const STATS_TRENDS = gql`
+  query StatsTrends {
+    statsTrends {
+      oneHour {
+        agentsDelta
+        contractsDelta
+        fibersDelta
+        successRatePct
+        avgSnapshotsPerHour
+        computedAt
+      }
+      twentyFourHour {
+        agentsDelta
+        contractsDelta
+        fibersDelta
+        agentsPct
+        contractsPct
+        successRatePct
+        computedAt
+      }
+    }
+  }
+`;
+
 export const AGENTS_LIST = gql`
   query AgentsList($limit: Int, $offset: Int) {
     agents(limit: $limit, offset: $offset) {
@@ -258,6 +282,23 @@ export interface ClusterStats {
   dl1Nodes: number;
   tps: number;
   epoch: number;
+}
+
+export interface StatsDelta {
+  agentsDelta: number;
+  contractsDelta: number;
+  fibersDelta: number;
+  agentsPct: number;
+  contractsPct: number;
+  successRatePct: number;
+  avgSnapshotsPerHour: number;
+  computedAt: string;
+}
+
+export interface StatsTrends {
+  oneHour: StatsDelta | null;
+  twentyFourHour: StatsDelta | null;
+  sevenDay: StatsDelta | null;
 }
 
 export interface ReputationPoint {

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import type { NetworkStats } from '../lib/queries';
+import { useQuery } from '@apollo/client/react';
+import type { NetworkStats, StatsTrends } from '../lib/queries';
+import { STATS_TRENDS } from '../lib/queries';
 import { Sparkline, generateTrendData } from './Sparkline';
 
 interface StatsCardsProps {
@@ -7,83 +9,122 @@ interface StatsCardsProps {
   loading: boolean;
 }
 
+// Format delta for display (e.g., "+5" or "-3")
+function formatDelta(value: number | undefined, suffix: string = ''): string {
+  if (value === undefined || value === 0) return suffix ? `0${suffix}` : '—';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value}${suffix}`;
+}
+
+// Format percentage delta (e.g., "↑ 2.1%")
+function formatPctDelta(value: number | undefined): { text: string; color: string } {
+  if (value === undefined || Math.abs(value) < 0.01) {
+    return { text: '— no change', color: 'text-[var(--text-muted)]' };
+  }
+  const arrow = value > 0 ? '↑' : '↓';
+  const color = value > 0 ? 'text-green-400' : 'text-red-400';
+  return { text: `${arrow} ${Math.abs(value).toFixed(1)}%`, color };
+}
+
 export function StatsCards({ stats, loading }: StatsCardsProps) {
-  // Generate stable trend data based on current values
+  // Fetch real trend data from API
+  const { data: trendsData } = useQuery<{ statsTrends: StatsTrends }>(STATS_TRENDS, {
+    pollInterval: 60000, // Refresh every minute
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const trends = trendsData?.statsTrends;
+  const hourly = trends?.oneHour;
+  const daily = trends?.twentyFourHour;
+
+  // Generate sparkline data based on current values (visual only)
   const trendData = useMemo(() => {
     const agents = stats?.totalAgents ?? 0;
-    const workflows = stats?.totalContracts ? stats.totalContracts - (stats.completedContracts || 0) : 0;
-    const attestations = stats?.totalAttestations ?? 0;
-    const value = stats?.totalContracts ? stats.totalContracts * 8.47 : 0;
+    const workflows = stats?.totalFibers ?? 0;
+    const contracts = stats?.totalContracts ?? 0;
     
     return {
+      fibers: generateTrendData(workflows, 0.15),
       agents: generateTrendData(agents, 0.15),
-      workflows: generateTrendData(workflows, 0.25),
-      attestations: generateTrendData(attestations, 0.2),
-      value: generateTrendData(value, 0.1),
-      settlement: [5.2, 4.8, 5.1, 4.6, 4.9, 4.3, 4.7, 4.4, 4.5, 4.1, 4.3, 4.2],
-      success: [98.1, 98.4, 98.2, 98.8, 99.1, 98.9, 99.0, 99.2, 99.1, 99.3, 99.1, 99.2],
+      contracts: generateTrendData(contracts, 0.2),
+      snapshots: generateTrendData(stats?.lastSnapshotOrdinal ?? 0, 0.05),
+      throughput: generateTrendData(hourly?.avgSnapshotsPerHour ?? 10, 0.3),
+      success: generateTrendData(
+        stats?.totalContracts ? (stats.completedContracts / stats.totalContracts) * 100 : 50,
+        0.02
+      ),
     };
-  }, [stats?.totalAgents, stats?.totalContracts, stats?.completedContracts, stats?.totalAttestations]);
+  }, [stats, hourly?.avgSnapshotsPerHour]);
+
+  // Calculate success rate
+  const successRate = stats?.completedContracts && stats?.totalContracts 
+    ? ((stats.completedContracts / stats.totalContracts) * 100).toFixed(1)
+    : '0.0';
+
+  // Calculate throughput (snapshots per minute as proxy for settlement speed)
+  const throughput = hourly?.avgSnapshotsPerHour 
+    ? (hourly.avgSnapshotsPerHour / 60).toFixed(1) 
+    : '—';
+
+  const successDelta = formatPctDelta(daily?.successRatePct);
 
   const cards = [
     { 
       label: 'TOTAL FIBERS', 
       value: stats?.totalFibers, 
       icon: '🧬',
-      delta: 'All workflows',
-      deltaColor: 'text-blue-400',
-      trend: trendData.workflows,
-      trendColor: '#3b82f6', // blue
+      delta: hourly ? formatDelta(hourly.fibersDelta, ' (1h)') : 'All workflows',
+      deltaColor: hourly?.fibersDelta && hourly.fibersDelta > 0 ? 'text-green-400' : 'text-blue-400',
+      trend: trendData.fibers,
+      trendColor: '#3b82f6',
     },
     { 
       label: 'AGENTS', 
       value: stats?.totalAgents, 
       icon: '🆔',
-      delta: `${stats?.activeAgents || 0} active`,
-      deltaColor: 'text-green-400',
+      delta: hourly ? formatDelta(hourly.agentsDelta, ' (1h)') : `${stats?.activeAgents || 0} active`,
+      deltaColor: hourly?.agentsDelta && hourly.agentsDelta > 0 ? 'text-green-400' : 'text-purple-400',
       trend: trendData.agents,
-      trendColor: '#a855f7', // purple
+      trendColor: '#a855f7',
     },
     { 
       label: 'CONTRACTS', 
       value: stats?.totalContracts, 
       icon: '📝',
-      delta: `${stats?.completedContracts || 0} completed`,
-      deltaColor: 'text-green-400',
-      trend: trendData.attestations,
-      trendColor: '#22c55e', // green
+      delta: hourly ? formatDelta(hourly.contractsDelta, ' (1h)') : `${stats?.completedContracts || 0} completed`,
+      deltaColor: hourly?.contractsDelta && hourly.contractsDelta > 0 ? 'text-green-400' : 'text-green-400',
+      trend: trendData.contracts,
+      trendColor: '#22c55e',
     },
     { 
       label: 'SNAPSHOT', 
       value: `#${stats?.lastSnapshotOrdinal || 0}`,
       icon: '📸',
       delta: 'Latest ordinal',
-      deltaColor: 'text-green-400',
+      deltaColor: 'text-yellow-400',
       isString: true,
-      trend: trendData.value,
-      trendColor: '#eab308', // yellow
+      trend: trendData.snapshots,
+      trendColor: '#eab308',
     },
     { 
-      label: 'AVG. SETTLEMENT', 
-      value: '4.2s',
-      icon: '⏱️',
-      delta: '↓ 0.3s',
-      deltaColor: 'text-green-400',
+      label: 'THROUGHPUT', 
+      value: `${throughput}/m`,
+      icon: '⚡',
+      delta: hourly ? `${hourly.avgSnapshotsPerHour?.toFixed(1) ?? '—'}/hr avg` : 'Snapshots/min',
+      deltaColor: 'text-orange-400',
       isString: true,
-      trend: trendData.settlement,
-      trendColor: '#f97316', // orange (inverted - down is good)
+      trend: trendData.throughput,
+      trendColor: '#f97316',
     },
     { 
       label: 'SUCCESS RATE', 
-      value: stats?.completedContracts && stats?.totalContracts 
-        ? `${((stats.completedContracts / stats.totalContracts) * 100).toFixed(1)}%`
-        : '99.2%',
+      value: `${successRate}%`,
       icon: '✅',
-      delta: '↑ 0.1%',
-      deltaColor: 'text-green-400',
+      delta: successDelta.text,
+      deltaColor: successDelta.color,
       isString: true,
       trend: trendData.success,
-      trendColor: '#22c55e', // green
+      trendColor: '#22c55e',
     },
   ];
 
