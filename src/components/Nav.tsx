@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
-  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'dao';
-  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'dao') => void;
+  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'governance';
+  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'governance') => void;
   onAgentSelect?: (address: string) => void;
   onFiberSelect?: (fiberId: string) => void;
   onDAOSelect?: (daoId: string) => void;
@@ -115,9 +115,9 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
             📊 Markets
           </button>
           <button
-            onClick={() => setView('dao')}
+            onClick={() => setView('governance')}
             className={`text-sm font-medium transition-colors ${
-              view === 'dao' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+              view === 'governance' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
             }`}
           >
             🏛️ DAOs
@@ -241,11 +241,11 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
               </button>
               <button
                 onClick={() => {
-                  setView('dao');
+                  setView('governance');
                   setMobileMenuOpen(false);
                 }}
                 className={`text-sm font-medium transition-colors ${
-                  view === 'dao' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+                  view === 'governance' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
                 }`}
               >
                 🏛️ DAOs

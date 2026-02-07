@@ -39,16 +39,16 @@ function parseHash(): { view: string; agent?: string; fiber?: string; dao?: stri
     return { view: 'fibers', fiber: parts[1] };
   }
   if (parts[0] === 'dao' && parts[1]) {
-    return { view: 'dao', dao: parts[1] };
+    return { view: 'governance', dao: parts[1] };
   }
-  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'dao'].includes(parts[0])) {
+  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'governance'].includes(parts[0])) {
     return { view: parts[0] };
   }
   return { view: 'dashboard' };
 }
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'dao'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'governance'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
   const [modalAttestation, setModalAttestation] = useState<AttestationModalData | null>(null);
   const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
@@ -93,7 +93,7 @@ function App() {
 
   const handleDAOSelect = useCallback((daoId: string) => {
     setSelectedDAO(daoId);
-    setView('dao');
+    setView('governance');
     updateHash(`dao/${daoId}`);
   }, []);
 
@@ -110,7 +110,7 @@ function App() {
       }
       if (parsed.dao) {
         setSelectedDAO(parsed.dao);
-        setView('dao');
+        setView('governance');
       }
       if (parsed.view && !parsed.agent && !parsed.fiber && !parsed.dao) {
         setView(parsed.view as typeof view);
@@ -163,7 +163,7 @@ function App() {
             handleViewChange('markets');
             break;
           case '6':
-            handleViewChange('dao');
+            handleViewChange('governance');
             break;
           case 'r':
             if (!e.metaKey && !e.ctrlKey) {
@@ -260,7 +260,7 @@ function App() {
           <MarketsView />
         )}
         
-        {view === 'dao' && (
+        {view === 'governance' && (
           <DAOsView 
             initialDaoId={selectedDAO}
             onAgentClick={handleAgentClick}
