@@ -158,7 +158,7 @@ interface MarketsViewProps {
 }
 
 export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps = {}) {
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedType, _setSelectedType] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [currentStateFilter, setCurrentStateFilter] = useState<string>('');
@@ -179,7 +179,7 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
     }
   }, [initialFiberId, onFiberClick]);
 
-  const { data: typesData, loading: typesLoading } = useQuery<WorkflowTypesData>(WORKFLOW_TYPES_QUERY);
+  const { data: typesData, loading: _typesLoading } = useQuery<WorkflowTypesData>(WORKFLOW_TYPES_QUERY);
   const { data: fibersData, loading: fibersLoading } = useQuery<FibersData>(FIBERS_QUERY, {
     variables: {
       workflowType: 'Market',
@@ -253,7 +253,7 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
   const fibers: Fiber[] = filteredFibers;
   const detail: Fiber | null = fiberDetail?.fiber || null;
 
-  const totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
+  const _totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
 
   // Extract unique market types for filter tabs
   const marketTypes = useMemo(() => {
