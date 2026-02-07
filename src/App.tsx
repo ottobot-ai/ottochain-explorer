@@ -157,7 +157,7 @@ function App() {
   }, [modalAgent, modalAttestation, refresh, handleAgentClose, handleViewChange]);
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen pb-16">
       <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} />
       
       <main className="container mx-auto px-6 pt-24 pb-16">

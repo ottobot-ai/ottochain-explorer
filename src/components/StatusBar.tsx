@@ -1,19 +1,24 @@
-import { useMemo } from 'react';
+import { useQuery } from '@apollo/client/react';
+import { CLUSTER_STATS } from '../lib/queries';
+import type { ClusterStats } from '../lib/queries';
 
 interface StatusBarProps {
   snapshotOrdinal: number | null;
 }
 
 export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
-  // Simulate node status - in production would come from metagraph API
-  const nodes = {
-    gl0: { count: 3, healthy: 3 },
-    ml0: { count: 3, healthy: 3 },
-    dl1: { count: 3, healthy: 3 },
-  };
+  // Fetch real cluster stats from GraphQL
+  const { data } = useQuery<{ clusterStats: ClusterStats }>(CLUSTER_STATS, {
+    pollInterval: 10000, // Poll every 10 seconds
+    fetchPolicy: 'cache-and-network',
+  });
 
-  // Mock TPS - stable across re-renders (in production would come from API)
-  const tps = useMemo(() => (Math.random() * 50 + 100).toFixed(1), []);
+  const cluster = data?.clusterStats;
+  const gl0Nodes = cluster?.gl0Nodes ?? 0;
+  const ml0Nodes = cluster?.ml0Nodes ?? 0;
+  const dl1Nodes = cluster?.dl1Nodes ?? 0;
+  const tps = cluster?.tps?.toFixed(1) ?? '0.0';
+  const epoch = cluster?.epoch ?? Math.floor((snapshotOrdinal || 0) / 100);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-[var(--border)] py-2 px-6 z-40">
@@ -22,19 +27,19 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
           {/* Node status */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className={`w-2 h-2 rounded-full ${gl0Nodes > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-[var(--text-muted)]">GL0:</span>
-              <span className="font-medium">{nodes.gl0.healthy} nodes</span>
+              <span className="font-medium">{gl0Nodes} nodes</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className={`w-2 h-2 rounded-full ${ml0Nodes > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-[var(--text-muted)]">ML0:</span>
-              <span className="font-medium">{nodes.ml0.healthy} nodes</span>
+              <span className="font-medium">{ml0Nodes} nodes</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className={`w-2 h-2 rounded-full ${dl1Nodes > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-[var(--text-muted)]">DL1:</span>
-              <span className="font-medium">{nodes.dl1.healthy} nodes</span>
+              <span className="font-medium">{dl1Nodes} nodes</span>
             </div>
           </div>
         </div>
@@ -66,7 +71,7 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)]">Epoch:</span>
-            <span className="font-medium">{Math.floor((snapshotOrdinal || 0) / 100)}</span>
+            <span className="font-medium">{epoch}</span>
           </div>
         </div>
       </div>
