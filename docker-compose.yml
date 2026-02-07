@@ -1,0 +1,23 @@
+# OttoChain Explorer - Standalone
+# Usage: docker compose up -d
+#
+# For development with hot reload, use: pnpm dev
+
+services:
+  explorer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:4000}
+        VITE_BRIDGE_URL: ${VITE_BRIDGE_URL:-http://localhost:3030}
+    container_name: explorer
+    restart: unless-stopped
+    ports:
+      - "${EXPLORER_PORT:-8080}:80"
+
+# For connecting to external services, set in .env:
+#   VITE_API_URL=http://your-gateway:4000
+#   VITE_WS_URL=ws://your-gateway:4000
+#   VITE_BRIDGE_URL=http://your-bridge:3030
