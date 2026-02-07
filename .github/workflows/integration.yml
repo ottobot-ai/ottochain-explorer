@@ -32,6 +32,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout explorer
         uses: actions/checkout@v4
@@ -170,6 +180,7 @@ jobs:
         working-directory: services
         env:
           DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
+          REDIS_URL: redis://localhost:6379
           METAGRAPH_ML0_URL: http://localhost:9200
           METAGRAPH_DL1_URL: http://localhost:9400
           GATEWAY_PORT: 4000
