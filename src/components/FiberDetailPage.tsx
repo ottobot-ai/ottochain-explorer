@@ -305,7 +305,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                 ML0 #{fiber.createdOrdinal}
                 {fiber.createdGl0Ordinal && <span className="text-[var(--green)]"> → GL0 #{fiber.createdGl0Ordinal}</span>}
                 {!fiber.createdGl0Ordinal && <span className="text-[var(--yellow)]"> (pending)</span>}
-                {' '}• Seq #{fiber.sequenceNumber}
+                {' '}• Seq #{fiber.sequenceNumber} • {new Date(fiber.createdAt).toLocaleDateString()}
               </div>
             </div>
           </div>
@@ -414,6 +414,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                         ML0 #{tx.snapshotOrdinal}
                         {tx.gl0Ordinal && <span className="text-[var(--green)]"> → GL0 #{tx.gl0Ordinal}</span>}
                         {!tx.gl0Ordinal && <span className="text-[var(--yellow)]"> (pending)</span>}
+                        {' '}• {new Date(tx.createdAt).toLocaleString()}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-1 text-sm text-[var(--text-muted)]">
