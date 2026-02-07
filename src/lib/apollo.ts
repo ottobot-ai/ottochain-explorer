@@ -3,40 +3,47 @@ import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 
-// Use relative URLs - works for both HTTP and HTTPS
-const GRAPHQL_HTTP = import.meta.env.VITE_GRAPHQL_URL || "/graphql";
-
-// Determine WebSocket URL based on current protocol
-const getWsUrl = () => {
-  if (typeof window === "undefined") return "ws://localhost:4000/graphql";
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/graphql`;
-};
+// Use relative URLs - works for both HTTP and HTTPS  
+const GRAPHQL_HTTP = "/graphql";
 
 const httpLink = new HttpLink({
   uri: GRAPHQL_HTTP,
 });
 
-const wsLink = new GraphQLWsLink(
-  createClient({
-    url: getWsUrl(),
-  })
-);
+// Build the link - start with just HTTP
+let finalLink = httpLink;
 
-// Split link: subscriptions go over WS, everything else over HTTP
-const splitLink = split(
-  ({ query }) => {
-    const definition = getMainDefinition(query);
-    return (
-      definition.kind === "OperationDefinition" &&
-      definition.operation === "subscription"
+// Try to add WebSocket support for subscriptions (won't break if it fails)
+if (typeof window !== "undefined") {
+  try {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/graphql`;
+    
+    const wsLink = new GraphQLWsLink(
+      createClient({
+        url: wsUrl,
+        lazy: true,
+        retryAttempts: 2,
+      })
     );
-  },
-  wsLink,
-  httpLink
-);
+
+    finalLink = split(
+      ({ query }) => {
+        const definition = getMainDefinition(query);
+        return (
+          definition.kind === "OperationDefinition" &&
+          definition.operation === "subscription"
+        );
+      },
+      wsLink,
+      httpLink
+    );
+  } catch (e) {
+    console.warn("WebSocket setup failed, using HTTP only:", e);
+  }
+}
 
 export const apolloClient = new ApolloClient({
-  link: splitLink,
+  link: finalLink,
   cache: new InMemoryCache(),
 });
