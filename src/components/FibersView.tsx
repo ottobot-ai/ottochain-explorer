@@ -353,8 +353,10 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                 <button
                   key={fiber.fiberId}
                   onClick={() => setSelectedFiber(fiber.fiberId)}
-                  className={`w-full p-4 text-left hover:bg-[var(--bg-elevated)] transition-colors ${
-                    selectedFiber === fiber.fiberId ? 'bg-[var(--bg-elevated)]' : ''
+                  className={`w-full p-4 text-left hover:bg-[var(--bg-elevated)] transition-all duration-200 ${
+                    selectedFiber === fiber.fiberId 
+                      ? 'bg-[var(--bg-elevated)] border-l-4 border-l-[var(--accent)] ring-1 ring-[var(--accent)]/30' 
+                      : 'border-l-4 border-l-transparent'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -385,7 +387,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
         </div>
 
         {/* Fiber Detail Panel */}
-        <div className="w-96 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="w-[500px] min-w-[400px] bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">Fiber Details</h2>
           </div>
