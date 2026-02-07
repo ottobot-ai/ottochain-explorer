@@ -158,7 +158,8 @@ interface MarketsViewProps {
 }
 
 export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps = {}) {
-  const [selectedType, _setSelectedType] = useState<string | null>(null);
+  // For Markets view, selectedType is always 'Market'
+  const selectedType = 'Market';
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [currentStateFilter, setCurrentStateFilter] = useState<string>('');
@@ -179,7 +180,7 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
     }
   }, [initialFiberId, onFiberClick]);
 
-  const { data: typesData, loading: _typesLoading } = useQuery<WorkflowTypesData>(WORKFLOW_TYPES_QUERY);
+  const { data: typesData, loading: typesLoading } = useQuery<WorkflowTypesData>(WORKFLOW_TYPES_QUERY);
   const { data: fibersData, loading: fibersLoading } = useQuery<FibersData>(FIBERS_QUERY, {
     variables: {
       workflowType: 'Market',
@@ -253,7 +254,8 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
   const fibers: Fiber[] = filteredFibers;
   const detail: Fiber | null = fiberDetail?.fiber || null;
 
-  const _totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
+  const totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
+  const marketTypeData = workflowTypes.find(t => t.name === 'Market');
 
   // Extract unique market types for filter tabs
   const marketTypes = useMemo(() => {
@@ -276,7 +278,11 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)]">Markets</h1>
             <p className="text-[var(--text-muted)] mt-1">
-              Browse all markets on-chain — {fibers.length} total markets
+              {typesLoading ? (
+                <span className="animate-pulse">Loading markets...</span>
+              ) : (
+                <>Browse all markets on-chain — {marketTypeData?.count ?? fibers.length} total ({totalFibers} fibers across all types)</>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
