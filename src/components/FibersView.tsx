@@ -204,83 +204,80 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Workflow Fibers</h1>
-          <p className="text-[var(--text-muted)] mt-1">
-            Browse all state machines on-chain — {totalFibers} total fibers
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-          <input
-            type="text"
-            value={ownerFilter}
-            onChange={(e) => setOwnerFilter(e.target.value)}
-            placeholder="Filter by owner (DAG...)"
-            className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-48 placeholder:text-[var(--text-muted)]"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
-          >
-            <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="ARCHIVED">Archived</option>
-            <option value="FAILED">Failed</option>
-          </select>
-        </div>
-
-        {/* Advanced Filters */}
-        <div className="mt-4">
-          <details open>
-            <summary className="cursor-pointer font-semibold text-[var(--text-primary)]">Advanced Filters</summary>
-            <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                placeholder="Created after"
-                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
-              />
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                placeholder="Created before"
-                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
-              />
-              <select
-                value={currentStateFilter}
-                onChange={(e) => setCurrentStateFilter(e.target.value)}
-                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
-              >
-                <option value="">All States</option>
-                {selectedType && workflowTypes.find(type => type.name === selectedType)?.states.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by Fiber ID"
-                className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full"
-              />
-            </div>
-          </details>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Workflow Fibers</h1>
+            <p className="text-[var(--text-muted)] mt-1">
+              Browse all state machines on-chain — {totalFibers} total fibers
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              placeholder="Filter by owner (DAG...)"
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-48 placeholder:text-[var(--text-muted)]"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
+            >
+              <option value="">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="ARCHIVED">Archived</option>
+              <option value="FAILED">Failed</option>
+            </select>
+            <button onClick={() => exportToCSV(fibers, 'fibers.csv')} className="btn-secondary text-xs">
+              📥 CSV
+            </button>
+            <button onClick={() => exportToJSON(fibers, 'fibers.json')} className="btn-secondary text-xs">
+              📥 JSON
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <button onClick={() => exportToCSV(fibers, 'fibers.csv')} className="btn-secondary text-xs">
-            📥 CSV
-          </button>
-          <button onClick={() => exportToJSON(fibers, 'fibers.json')} className="btn-secondary text-xs">
-            📥 JSON
-          </button>
-        </div>
-      </div>
+        {/* Advanced Filters - collapsible, on its own row */}
+        <details className="bg-[var(--bg-card)] rounded-lg border border-[var(--border)] p-3">
+          <summary className="cursor-pointer font-semibold text-[var(--text-primary)] text-sm">
+            Advanced Filters
+          </summary>
+          <div className="flex flex-wrap gap-3 mt-3">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              placeholder="Created after"
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              placeholder="Created before"
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
+            />
+            <select
+              value={currentStateFilter}
+              onChange={(e) => setCurrentStateFilter(e.target.value)}
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
+            >
+              <option value="">All States</option>
+              {selectedType && workflowTypes.find(type => type.name === selectedType)?.states.map(state => (
+                <option key={state} value={state}>{state}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by Fiber ID"
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-48"
+            />
+          </div>
+        </details>
       </div>
 
       {/* Workflow Type Cards */}

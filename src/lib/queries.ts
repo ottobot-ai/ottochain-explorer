@@ -16,6 +16,18 @@ export const NETWORK_STATS = gql`
   }
 `;
 
+export const CLUSTER_STATS = gql`
+  query ClusterStats {
+    clusterStats {
+      gl0Nodes
+      ml0Nodes
+      dl1Nodes
+      tps
+      epoch
+    }
+  }
+`;
+
 export const AGENTS_LIST = gql`
   query AgentsList($limit: Int, $offset: Int) {
     agents(limit: $limit, offset: $offset) {
@@ -238,6 +250,14 @@ export interface NetworkStats {
   totalAttestations: number;
   totalFibers: number;
   lastSnapshotOrdinal: number;
+}
+
+export interface ClusterStats {
+  gl0Nodes: number;
+  ml0Nodes: number;
+  dl1Nodes: number;
+  tps: number;
+  epoch: number;
 }
 
 export interface ReputationPoint {
