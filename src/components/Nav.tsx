@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
-  view: 'dashboard' | 'fibers' | 'identity' | 'contracts';
-  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts') => void;
+  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets';
+  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets') => void;
   onAgentSelect?: (address: string) => void;
   onFiberSelect?: (fiberId: string) => void;
 }
@@ -102,6 +102,14 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect }: NavProps) {
             }`}
           >
             📝 Contracts
+          </button>
+          <button
+            onClick={() => setView('markets')}
+            className={`text-sm font-medium transition-colors ${
+              view === 'markets' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+            }`}
+          >
+            📊 Markets
           </button>
           <a href="https://github.com/scasplte2/ottochain" target="_blank" rel="noopener" className="text-sm text-[var(--text-muted)] hover:text-white transition-colors">
             Docs
@@ -208,6 +216,17 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect }: NavProps) {
                 }`}
               >
                 📝 Contracts
+              </button>
+              <button
+                onClick={() => {
+                  setView('markets');
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-sm font-medium transition-colors ${
+                  view === 'markets' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+                }`}
+              >
+                📊 Markets
               </button>
               <a href="https://github.com/scasplte2/ottochain" target="_blank" rel="noopener" className="text-sm text-[var(--text-muted)] hover:text-white transition-colors">
                 Docs

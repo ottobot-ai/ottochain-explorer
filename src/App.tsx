@@ -10,6 +10,7 @@ import { AttestationModal } from './components/AttestationModal';
 import { ContractsView } from './components/ContractsView';
 import { FibersView } from './components/FibersView';
 import { IdentityView } from './components/IdentityView';
+import { MarketsView } from './components/MarketsView';
 import { StatusBar } from './components/StatusBar';
 import { InteractionGraph } from './components/InteractionGraph';
 // Simplified attestation data for modal display
@@ -36,14 +37,14 @@ function parseHash(): { view: string; agent?: string; fiber?: string } {
   if (parts[0] === 'fiber' && parts[1]) {
     return { view: 'fibers', fiber: parts[1] };
   }
-  if (['dashboard', 'fibers', 'identity', 'contracts'].includes(parts[0])) {
+  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets'].includes(parts[0])) {
     return { view: parts[0] };
   }
   return { view: 'dashboard' };
 }
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
   const [modalAttestation, setModalAttestation] = useState<AttestationModalData | null>(null);
   const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
@@ -232,6 +233,10 @@ function App() {
         
         {view === 'contracts' && (
           <ContractsView onAgentClick={handleAgentClick} />
+        )}
+        
+        {view === 'markets' && (
+          <MarketsView />
         )}
       </main>
 
