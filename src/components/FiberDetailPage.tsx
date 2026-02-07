@@ -24,18 +24,13 @@ const GET_FIBER = gql`
       sequenceNumber
       createdAt
       updatedAt
-      createdOrdinal
-      updatedOrdinal
     }
     fiberTransitions(fiberId: $fiberId, limit: 50) {
-      id
       eventName
       fromState
       toState
       success
       gasUsed
-      payload
-      snapshotOrdinal
       createdAt
     }
   }
@@ -57,19 +52,14 @@ interface FiberData {
   sequenceNumber: number;
   createdAt: string;
   updatedAt: string;
-  createdOrdinal: number;
-  updatedOrdinal: number;
 }
 
 interface TransitionData {
-  id: string;
   eventName: string;
   fromState: string;
   toState: string;
   success: boolean;
   gasUsed: number;
-  payload: string;
-  snapshotOrdinal: number;
   createdAt: string;
 }
 
@@ -296,7 +286,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
             <div>
               <div className="font-mono text-sm">{fiber.fiberId}</div>
               <div className="text-xs text-[var(--text-muted)]">
-                Created at ordinal {fiber.createdOrdinal} • Seq #{fiber.sequenceNumber}
+                Seq #{fiber.sequenceNumber} • {new Date(fiber.createdAt).toLocaleDateString()}
               </div>
             </div>
           </div>
@@ -385,19 +375,9 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                   No transitions yet
                 </div>
               ) : (
-                transitions.map((tx: {
-                  id: string;
-                  eventName: string;
-                  fromState: string;
-                  toState: string;
-                  success: boolean;
-                  gasUsed: number;
-                  snapshotOrdinal: number;
-                  createdAt: string;
-                  payload: string;
-                }) => (
+                transitions.map((tx: TransitionData, index: number) => (
                   <div 
-                    key={tx.id}
+                    key={`${tx.eventName}-${tx.createdAt}-${index}`}
                     className={`p-3 rounded-lg border ${
                       tx.success 
                         ? 'bg-[var(--bg-elevated)] border-[var(--border)]' 
@@ -412,7 +392,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                         <span className="font-medium">{tx.eventName}</span>
                       </div>
                       <div className="text-xs text-[var(--text-muted)]">
-                        Ordinal {tx.snapshotOrdinal}
+                        {new Date(tx.createdAt).toLocaleString()}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-1 text-sm text-[var(--text-muted)]">
@@ -423,16 +403,6 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                         <span className="ml-auto text-xs">⛽ {tx.gasUsed}</span>
                       )}
                     </div>
-                    {tx.payload && tx.payload !== '{}' && (
-                      <details className="mt-2">
-                        <summary className="text-xs text-[var(--text-muted)] cursor-pointer">
-                          Payload
-                        </summary>
-                        <pre className="text-xs font-mono bg-[var(--bg)] p-2 rounded mt-1 overflow-auto">
-                          {JSON.stringify(typeof tx.payload === 'string' ? JSON.parse(tx.payload) : tx.payload, null, 2)}
-                        </pre>
-                      </details>
-                    )}
                   </div>
                 ))
               )}
