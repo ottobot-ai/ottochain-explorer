@@ -24,14 +24,14 @@ const GET_FIBER = gql`
       sequenceNumber
       createdAt
       updatedAt
-    }
-    fiberTransitions(fiberId: $fiberId, limit: 50) {
-      eventName
-      fromState
-      toState
-      success
-      gasUsed
-      createdAt
+      transitions(limit: 50) {
+        eventName
+        fromState
+        toState
+        success
+        gasUsed
+        createdAt
+      }
     }
   }
 `;
@@ -63,9 +63,12 @@ interface TransitionData {
   createdAt: string;
 }
 
+interface FiberWithTransitions extends FiberData {
+  transitions: TransitionData[];
+}
+
 interface GetFiberResponse {
-  fiber: FiberData | null;
-  fiberTransitions: TransitionData[];
+  fiber: FiberWithTransitions | null;
 }
 
 // Schema-specific renderers
@@ -238,7 +241,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
   }
 
   const fiber = data.fiber;
-  const transitions = data.fiberTransitions || [];
+  const transitions = data.fiber.transitions || [];
   
   // Safe JSON parsing with fallbacks
   const parseJsonSafely = (data: string | Record<string, unknown>, fallback = {}) => {
