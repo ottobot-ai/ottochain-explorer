@@ -197,7 +197,7 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
             </div>
             
             {/* Timeline */}
-            <div>
+            <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3">📅 Timeline</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-3 text-sm">
@@ -219,8 +219,110 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
                     <span>{new Date(detailData.contract.completedAt).toLocaleString()}</span>
                   </div>
                 )}
+                {detailData.contract.rejectedAt && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-[var(--red)]">❌</span>
+                    <span className="text-[var(--text-muted)]">Rejected:</span>
+                    <span>{new Date(detailData.contract.rejectedAt).toLocaleString()}</span>
+                  </div>
+                )}
               </div>
             </div>
+            
+            {/* Attestations */}
+            {detailData.contract.attestations && detailData.contract.attestations.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">🏆 Attestations</h3>
+                <div className="space-y-2">
+                  {detailData.contract.attestations.map((attestation) => (
+                    <div 
+                      key={attestation.id}
+                      className="p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)]"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            attestation.type === 'COMPLETION' ? 'bg-green-500/20 text-green-400' :
+                            attestation.type === 'VOUCH' ? 'bg-blue-500/20 text-blue-400' :
+                            attestation.type === 'VIOLATION' ? 'bg-red-500/20 text-red-400' :
+                            'bg-purple-500/20 text-purple-400'
+                          }`}>
+                            {attestation.type}
+                          </span>
+                          <span className={`font-medium ${attestation.delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {attestation.delta >= 0 ? '+' : ''}{attestation.delta} rep
+                          </span>
+                        </div>
+                        <span className="text-xs text-[var(--text-muted)]">
+                          {new Date(attestation.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {attestation.issuer && (
+                        <div className="text-sm text-[var(--text-muted)]">
+                          By: <button 
+                            onClick={() => onAgentClick(attestation.issuer!.address)}
+                            className="text-[var(--accent)] hover:underline"
+                          >
+                            {attestation.issuer.displayName || attestation.issuer.address.slice(0, 12) + '...'}
+                          </button>
+                        </div>
+                      )}
+                      {attestation.reason && (
+                        <div className="text-sm text-[var(--text-muted)] mt-1 italic">
+                          "{attestation.reason}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Dispute Information */}
+            {detailData.contract.dispute && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">⚠️ Dispute</h3>
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-sm px-2 py-0.5 rounded-full ${
+                      detailData.contract.dispute.status === 'OPEN' ? 'bg-yellow-500/20 text-yellow-400' :
+                      detailData.contract.dispute.status === 'RESOLVED' ? 'bg-green-500/20 text-green-400' :
+                      'bg-red-500/20 text-red-400'
+                    }`}>
+                      {detailData.contract.dispute.status}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      Opened: {new Date(detailData.contract.dispute.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <span className="text-sm text-[var(--text-muted)]">Initiated by: </span>
+                    <button 
+                      onClick={() => onAgentClick(detailData.contract!.dispute!.initiator.address)}
+                      className="text-sm text-[var(--accent)] hover:underline"
+                    >
+                      {detailData.contract.dispute.initiator.displayName || 
+                       detailData.contract.dispute.initiator.address.slice(0, 12) + '...'}
+                    </button>
+                  </div>
+                  <div className="text-sm mb-2">
+                    <span className="text-[var(--text-muted)]">Reason: </span>
+                    <span className="text-[var(--text-primary)]">{detailData.contract.dispute.reason}</span>
+                  </div>
+                  {detailData.contract.dispute.resolution && (
+                    <div className="text-sm pt-2 border-t border-red-500/30">
+                      <span className="text-[var(--text-muted)]">Resolution: </span>
+                      <span className="text-green-400">{detailData.contract.dispute.resolution}</span>
+                      {detailData.contract.dispute.resolvedAt && (
+                        <span className="text-xs text-[var(--text-muted)] ml-2">
+                          ({new Date(detailData.contract.dispute.resolvedAt).toLocaleString()})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-[var(--text-muted)]">

@@ -185,6 +185,30 @@ export const CONTRACT_DETAILS = gql`
       proposedAt
       acceptedAt
       completedAt
+      rejectedAt
+      attestations {
+        id
+        type
+        issuer {
+          address
+          displayName
+        }
+        delta
+        reason
+        createdAt
+      }
+      dispute {
+        id
+        status
+        initiator {
+          address
+          displayName
+        }
+        reason
+        resolution
+        createdAt
+        resolvedAt
+      }
     }
   }
 `;
@@ -397,6 +421,25 @@ export interface Attestation {
   txHash: string;
 }
 
+export interface ContractAttestation {
+  id: string;
+  type: 'VOUCH' | 'BEHAVIORAL' | 'COMPLETION' | 'VIOLATION';
+  issuer: { address: string; displayName: string | null } | null;
+  delta: number;
+  reason: string | null;
+  createdAt: string;
+}
+
+export interface ContractDispute {
+  id: string;
+  status: 'OPEN' | 'RESOLVED' | 'ESCALATED';
+  initiator: { address: string; displayName: string | null };
+  reason: string;
+  resolution: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
 export interface Contract {
   id: string;
   contractId: string;
@@ -407,6 +450,9 @@ export interface Contract {
   proposedAt: string;
   acceptedAt: string | null;
   completedAt: string | null;
+  rejectedAt?: string | null;
+  attestations?: ContractAttestation[];
+  dispute?: ContractDispute | null;
 }
 
 export interface ActivityEvent {
