@@ -22,14 +22,22 @@ const GET_FIBER = gql`
       definition
       owners
       sequenceNumber
+      createdOrdinal
+      updatedOrdinal
+      createdGl0Ordinal
+      updatedGl0Ordinal
       createdAt
       updatedAt
       transitions(limit: 50) {
+        id
         eventName
         fromState
         toState
         success
         gasUsed
+        payload
+        snapshotOrdinal
+        gl0Ordinal
         createdAt
       }
     }
@@ -42,6 +50,19 @@ interface FiberDetailPageProps {
   onAgentClick?: (address: string) => void;
 }
 
+interface TransitionData {
+  id: number;
+  eventName: string;
+  fromState: string;
+  toState: string;
+  success: boolean;
+  gasUsed: number;
+  payload: string | null;
+  snapshotOrdinal: string;
+  gl0Ordinal: string | null;
+  createdAt: string;
+}
+
 interface FiberData {
   fiberId: string;
   workflowType: string;
@@ -50,25 +71,17 @@ interface FiberData {
   definition: string | Record<string, unknown>;
   owners: string[];
   sequenceNumber: number;
+  createdOrdinal: string;
+  updatedOrdinal: string;
+  createdGl0Ordinal: string | null;
+  updatedGl0Ordinal: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-interface TransitionData {
-  eventName: string;
-  fromState: string;
-  toState: string;
-  success: boolean;
-  gasUsed: number;
-  createdAt: string;
-}
-
-interface FiberWithTransitions extends FiberData {
   transitions: TransitionData[];
 }
 
 interface GetFiberResponse {
-  fiber: FiberWithTransitions | null;
+  fiber: FiberData | null;
 }
 
 // Schema-specific renderers
@@ -241,7 +254,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
   }
 
   const fiber = data.fiber;
-  const transitions = data.fiber.transitions || [];
+  const transitions = fiber.transitions || [];
   
   // Safe JSON parsing with fallbacks
   const parseJsonSafely = (data: string | Record<string, unknown>, fallback = {}) => {
@@ -289,7 +302,10 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
             <div>
               <div className="font-mono text-sm">{fiber.fiberId}</div>
               <div className="text-xs text-[var(--text-muted)]">
-                Seq #{fiber.sequenceNumber} • {new Date(fiber.createdAt).toLocaleDateString()}
+                ML0 #{fiber.createdOrdinal}
+                {fiber.createdGl0Ordinal && <span className="text-[var(--green)]"> → GL0 #{fiber.createdGl0Ordinal}</span>}
+                {!fiber.createdGl0Ordinal && <span className="text-[var(--yellow)]"> (pending)</span>}
+                {' '}• Seq #{fiber.sequenceNumber}
               </div>
             </div>
           </div>
@@ -380,7 +396,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
               ) : (
                 transitions.map((tx: TransitionData, index: number) => (
                   <div 
-                    key={`${tx.eventName}-${tx.createdAt}-${index}`}
+                    key={tx.id ?? `${tx.eventName}-${tx.createdAt}-${index}`}
                     className={`p-3 rounded-lg border ${
                       tx.success 
                         ? 'bg-[var(--bg-elevated)] border-[var(--border)]' 
@@ -395,7 +411,9 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                         <span className="font-medium">{tx.eventName}</span>
                       </div>
                       <div className="text-xs text-[var(--text-muted)]">
-                        {new Date(tx.createdAt).toLocaleString()}
+                        ML0 #{tx.snapshotOrdinal}
+                        {tx.gl0Ordinal && <span className="text-[var(--green)]"> → GL0 #{tx.gl0Ordinal}</span>}
+                        {!tx.gl0Ordinal && <span className="text-[var(--yellow)]"> (pending)</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-1 text-sm text-[var(--text-muted)]">
