@@ -200,9 +200,9 @@ function App() {
     <div className="min-h-screen pb-16">
       <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} onDAOSelect={handleDAOSelect} />
       
-      <main className="container mx-auto px-6 pt-24 pb-16">
+      <main className="container mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16">
         {/* Live indicator with controls */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-2">
             <div className={`live-dot ${!autoUpdate ? 'opacity-30' : ''}`}></div>
             <span className="text-sm text-[var(--green)] font-medium">
@@ -235,7 +235,7 @@ function App() {
             <StatsCards stats={currentStats ?? undefined} loading={isLoading && !currentStats} />
             
             {/* Main content: Transactions + Sidebars */}
-            <div className="flex gap-6 mt-6">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 mt-4 lg:mt-6">
               {/* Transactions Table (main area) */}
               <TransactionsTable 
                 contracts={data.contracts} 
@@ -244,7 +244,7 @@ function App() {
               />
               
               {/* Right sidebar */}
-              <div className="flex flex-col gap-6 w-80 flex-shrink-0">
+              <div className="flex flex-col gap-4 lg:gap-6 w-full lg:w-80 lg:flex-shrink-0 order-first lg:order-last">
                 <LiveActivity 
                   activity={data.activity} 
                   onAgentClick={handleAgentClick}
@@ -255,9 +255,9 @@ function App() {
               </div>
             </div>
             
-            {/* Interaction Graph */}
-            <div className="mt-6">
-              <InteractionGraph onAgentClick={handleAgentClick} width={1100} height={500} />
+            {/* Interaction Graph - hidden below lg (1024px) since it's 1100px wide */}
+            <div className="hidden lg:block mt-6">
+              <InteractionGraph onAgentClick={handleAgentClick} width={1100} height={400} />
             </div>
           </>
         )}

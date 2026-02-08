@@ -129,11 +129,11 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
       {cards.map((card) => (
         <div 
           key={card.label} 
-          className="card group hover:glow-purple transition-all duration-300 p-4"
+          className="card group hover:glow-purple transition-all duration-300 p-3 sm:p-4"
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
           </div>
           <div className="flex items-end justify-between gap-2">
             <div>
-              <span className={`text-2xl font-bold ${card.isString ? 'text-[var(--accent-2)]' : 'gradient-text'}`}>
+              <span className={`text-xl sm:text-2xl font-bold ${card.isString ? 'text-[var(--accent-2)]' : 'gradient-text'}`}>
                 {loading ? '...' : (card.isString ? card.value : card.value?.toLocaleString() ?? '0')}
               </span>
               <div className={`text-xs mt-1 ${card.deltaColor}`}>
