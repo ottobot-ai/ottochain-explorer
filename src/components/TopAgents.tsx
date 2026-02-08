@@ -38,7 +38,7 @@ export function TopAgents({ agents, onAgentClick }: TopAgentsProps) {
   const loading = agents.length === 0;
 
   return (
-    <div className="card w-80 flex-shrink-0">
+    <div className="card w-80 flex-shrink-0 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span>🏆</span> Top Agents

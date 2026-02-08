@@ -52,7 +52,7 @@ export function LiveActivity({ activity, onAgentClick, onAttestationClick, onFib
   const loading = activity.length === 0;
 
   return (
-    <div className="card w-80 flex-shrink-0">
+    <div className="card w-80 flex-shrink-0 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />

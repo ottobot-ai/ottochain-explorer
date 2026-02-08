@@ -105,17 +105,17 @@ export function TransactionsTable({ contracts, activity, onAgentClick }: Transac
   const loading = contracts.length === 0 && activity.length === 0;
 
   return (
-    <div className="card flex-1 flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card flex-1 flex flex-col p-3 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span>📋</span> Recent Transactions
         </h2>
-        <div className="flex gap-1 bg-[var(--bg-elevated)] rounded-lg p-1">
+        <div className="flex gap-1 bg-[var(--bg-elevated)] rounded-lg p-1 overflow-x-auto">
           {filters.map(f => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-all whitespace-nowrap ${
                 filter === f.key
                   ? 'bg-[var(--accent)] text-white'
                   : 'text-[var(--text-muted)] hover:text-white'
@@ -127,7 +127,46 @@ export function TransactionsTable({ contracts, activity, onAgentClick }: Transac
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1 overflow-y-auto min-h-0">
+      {/* Mobile: Card layout */}
+      <div className="md:hidden flex-1 overflow-y-auto space-y-2">
+        {loading ? (
+          [...Array(5)].map((_, i) => (
+            <div key={i} className="h-20 bg-[var(--bg-elevated)] rounded-lg animate-pulse" />
+          ))
+        ) : filteredTxs.length === 0 ? (
+          <div className="text-center py-8 text-[var(--text-muted)]">
+            No transactions found
+          </div>
+        ) : (
+          filteredTxs.map((tx) => {
+            const status = getStatusBadge(tx.status);
+            return (
+              <div
+                key={tx.id}
+                className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border)] active:bg-[var(--bg-card)] transition-colors cursor-pointer"
+                onClick={() => tx.clickAddress && onAgentClick(tx.clickAddress)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${getTypeBadge(tx.type)}`}>
+                    {tx.type}
+                  </span>
+                  <span className="text-xs text-[var(--text-muted)]">{formatTime(tx.time)}</span>
+                </div>
+                <div className="font-mono text-sm truncate mb-2">{tx.parties}</div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-[var(--accent-2)]">{tx.amount}</span>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${status.bg}`}>
+                    {status.icon} {status.text}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Tablet+: Table layout */}
+      <div className="hidden md:block overflow-x-auto flex-1 overflow-y-auto min-h-0">
         <table className="w-full text-sm h-full">
           <thead className="sticky top-0 bg-[var(--bg-card)]">
             <tr className="text-[var(--text-muted)] text-xs uppercase tracking-wider">
