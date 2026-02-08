@@ -11,6 +11,7 @@ import { ContractsView } from './components/ContractsView';
 import { FibersView } from './components/FibersView';
 import { IdentityView } from './components/IdentityView';
 import { MarketsView } from './components/MarketsView';
+import { OraclesView } from './components/OraclesView';
 import { DAOsView } from './components/DAOsView';
 import { StatusBar } from './components/StatusBar';
 import { InteractionGraph } from './components/InteractionGraph';
@@ -27,7 +28,7 @@ interface AttestationModalData {
 }
 
 // Parse URL hash for deep linking
-function parseHash(): { view: string; agent?: string; fiber?: string; dao?: string } {
+function parseHash(): { view: string; agent?: string; fiber?: string; dao?: string; oracle?: string } {
   const hash = window.location.hash.slice(1); // Remove #
   if (!hash) return { view: 'dashboard' };
   
@@ -41,18 +42,22 @@ function parseHash(): { view: string; agent?: string; fiber?: string; dao?: stri
   if (parts[0] === 'dao' && parts[1]) {
     return { view: 'governance', dao: parts[1] };
   }
-  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'governance'].includes(parts[0])) {
+  if (parts[0] === 'oracle' && parts[1]) {
+    return { view: 'oracles', oracle: parts[1] };
+  }
+  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'oracles', 'governance'].includes(parts[0])) {
     return { view: parts[0] };
   }
   return { view: 'dashboard' };
 }
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'governance'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
   const [modalAttestation, setModalAttestation] = useState<AttestationModalData | null>(null);
   const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
   const [selectedDAO, setSelectedDAO] = useState<string | null>(null);
+  const [selectedOracle, setSelectedOracle] = useState<string | null>(null);
   
   // Use shared data from background polling
   const { data, isLoading, refresh, autoUpdate, setAutoUpdate } = useData();
@@ -97,6 +102,12 @@ function App() {
     updateHash(`dao/${daoId}`);
   }, []);
 
+  const handleOracleSelect = useCallback((oracleId: string) => {
+    setSelectedOracle(oracleId);
+    setView('oracles');
+    updateHash(`oracle/${oracleId}`);
+  }, []);
+
   // Handle URL hash changes for deep linking
   useEffect(() => {
     const handleHashChange = () => {
@@ -112,7 +123,11 @@ function App() {
         setSelectedDAO(parsed.dao);
         setView('governance');
       }
-      if (parsed.view && !parsed.agent && !parsed.fiber && !parsed.dao) {
+      if (parsed.oracle) {
+        setSelectedOracle(parsed.oracle);
+        setView('oracles');
+      }
+      if (parsed.view && !parsed.agent && !parsed.fiber && !parsed.dao && !parsed.oracle) {
         setView(parsed.view as typeof view);
       }
     };
@@ -163,6 +178,9 @@ function App() {
             handleViewChange('markets');
             break;
           case '6':
+            handleViewChange('oracles');
+            break;
+          case '7':
             handleViewChange('governance');
             break;
           case 'r':
@@ -258,6 +276,14 @@ function App() {
         
         {view === 'markets' && (
           <MarketsView />
+        )}
+        
+        {view === 'oracles' && (
+          <OraclesView 
+            initialFiberId={selectedOracle}
+            onFiberClick={handleOracleSelect}
+            onAgentClick={handleAgentClick}
+          />
         )}
         
         {view === 'governance' && (
