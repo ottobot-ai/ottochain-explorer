@@ -213,7 +213,7 @@ export function DAOsView({ initialDaoId, onAgentClick }: DAOsViewProps) {
       </div>
 
       {/* Sidebar: Quick Stats or Selected DAO Preview */}
-      <div className="card h-fit">
+      <div className="card h-fit p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
           {selectedDAO ? 'DAO Preview' : 'Overview'}
         </h3>

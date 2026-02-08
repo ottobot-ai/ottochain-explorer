@@ -37,7 +37,7 @@ export function ActivityFeed({ events, loading, onAgentClick }: ActivityFeedProp
   };
 
   return (
-    <div className="card h-full flex flex-col">
+    <div className="card h-full flex flex-col p-4 sm:p-6">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 flex-shrink-0">
         <span>⚡</span>
         <span>Recent Activity</span>

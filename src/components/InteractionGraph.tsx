@@ -186,14 +186,14 @@ export function InteractionGraph({ onAgentClick, width = 600, height = 400 }: In
 
   if (loading && graphData.nodes.length === 0) {
     return (
-      <div className="card h-full flex items-center justify-center">
+      <div className="card h-full flex items-center justify-center p-4">
         <div className="text-[var(--text-muted)]">Loading graph...</div>
       </div>
     );
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <span>🔗</span> Agent Interactions

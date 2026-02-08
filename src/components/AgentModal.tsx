@@ -54,7 +54,7 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
       />
       
       {/* Modal */}
-      <div className="relative bg-[var(--bg-card)] border border-[var(--border)] rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl">
+      <div className="relative bg-[var(--bg-card)] border border-[var(--border)] rounded-xl max-w-full sm:max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl mx-2 sm:mx-0">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -64,17 +64,17 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
         </button>
         
         {loading ? (
-          <div className="p-8 space-y-4">
+          <div className="p-4 sm:p-8 space-y-4">
             <div className="h-8 w-48 bg-[var(--bg-elevated)] rounded animate-pulse" />
             <div className="h-4 w-96 bg-[var(--bg-elevated)] rounded animate-pulse" />
             <div className="h-32 bg-[var(--bg-elevated)] rounded animate-pulse" />
           </div>
         ) : !agent ? (
-          <div className="p-8 text-center text-[var(--text-muted)]">
+          <div className="p-4 sm:p-8 text-center text-[var(--text-muted)]">
             Agent not found
           </div>
         ) : (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Header */}
             <div className="flex items-start justify-between mb-4 pr-8">
               <div>
@@ -173,9 +173,11 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
                 <div className="space-y-4">
                   {/* Reputation History Chart */}
                   {(agent.reputationHistory?.length ?? 0) > 1 && (
-                    <div className="bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] p-4">
+                    <div className="bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] p-3 sm:p-4">
                       <h4 className="text-sm font-medium mb-2">📈 Reputation History</h4>
-                      <ReputationChart data={agent.reputationHistory!} width={550} height={140} />
+                      <div className="w-full overflow-x-auto">
+                        <ReputationChart data={agent.reputationHistory!} width={450} height={140} />
+                      </div>
                     </div>
                   )}
                   
