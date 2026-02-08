@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
-  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'governance';
-  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'governance') => void;
+  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance';
+  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance') => void;
   onAgentSelect?: (address: string) => void;
   onFiberSelect?: (fiberId: string) => void;
   onDAOSelect?: (daoId: string) => void;
@@ -113,6 +113,14 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
             }`}
           >
             📊 Markets
+          </button>
+          <button
+            onClick={() => setView('oracles')}
+            className={`text-sm font-medium transition-colors ${
+              view === 'oracles' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+            }`}
+          >
+            🔮 Oracles
           </button>
           <button
             onClick={() => setView('governance')}
@@ -238,6 +246,17 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
                 }`}
               >
                 📊 Markets
+              </button>
+              <button
+                onClick={() => {
+                  setView('oracles');
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-sm font-medium transition-colors ${
+                  view === 'oracles' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+                }`}
+              >
+                🔮 Oracles
               </button>
               <button
                 onClick={() => {
