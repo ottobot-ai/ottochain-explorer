@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
-  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance';
-  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance') => void;
+  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance' | 'rejections';
+  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance' | 'rejections') => void;
   onAgentSelect?: (address: string) => void;
   onFiberSelect?: (fiberId: string) => void;
   onDAOSelect?: (daoId: string) => void;
