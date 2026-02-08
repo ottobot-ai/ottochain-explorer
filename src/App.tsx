@@ -13,6 +13,7 @@ import { IdentityView } from './components/IdentityView';
 import { MarketsView } from './components/MarketsView';
 import { OraclesView } from './components/OraclesView';
 import { DAOsView } from './components/DAOsView';
+import { RejectionsView } from './components/RejectionsView';
 import { StatusBar } from './components/StatusBar';
 import { InteractionGraph } from './components/InteractionGraph';
 // Simplified attestation data for modal display
@@ -45,14 +46,14 @@ function parseHash(): { view: string; agent?: string; fiber?: string; dao?: stri
   if (parts[0] === 'oracle' && parts[1]) {
     return { view: 'oracles', oracle: parts[1] };
   }
-  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'oracles', 'governance'].includes(parts[0])) {
+  if (['dashboard', 'fibers', 'identity', 'contracts', 'markets', 'oracles', 'governance', 'rejections'].includes(parts[0])) {
     return { view: parts[0] };
   }
   return { view: 'dashboard' };
 }
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance' | 'rejections'>('dashboard');
   const [modalAgent, setModalAgent] = useState<string | null>(null);
   const [modalAttestation, setModalAttestation] = useState<AttestationModalData | null>(null);
   const [selectedFiber, setSelectedFiber] = useState<string | null>(null);
@@ -290,6 +291,12 @@ function App() {
           <DAOsView 
             initialDaoId={selectedDAO}
             onAgentClick={handleAgentClick}
+          />
+        )}
+        
+        {view === 'rejections' && (
+          <RejectionsView 
+            onFiberSelect={handleFiberSelect}
           />
         )}
       </main>

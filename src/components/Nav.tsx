@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { GlobalSearch } from './GlobalSearch';
 
 interface NavProps {
-  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance';
-  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance') => void;
+  view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance' | 'rejections';
+  setView: (view: 'dashboard' | 'fibers' | 'identity' | 'contracts' | 'markets' | 'oracles' | 'governance' | 'rejections') => void;
   onAgentSelect?: (address: string) => void;
   onFiberSelect?: (fiberId: string) => void;
   onDAOSelect?: (daoId: string) => void;
@@ -129,6 +129,14 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
             }`}
           >
             🏛️ DAOs
+          </button>
+          <button
+            onClick={() => setView('rejections')}
+            className={`text-sm font-medium transition-colors ${
+              view === 'rejections' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+            }`}
+          >
+            ⛔ Rejections
           </button>
           <a href="https://github.com/scasplte2/ottochain" target="_blank" rel="noopener" className="text-sm text-[var(--text-muted)] hover:text-white transition-colors">
             Docs
@@ -268,6 +276,17 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
                 }`}
               >
                 🏛️ DAOs
+              </button>
+              <button
+                onClick={() => {
+                  setView('rejections');
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-sm font-medium transition-colors ${
+                  view === 'rejections' ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+                }`}
+              >
+                ⛔ Rejections
               </button>
               <a href="https://github.com/scasplte2/ottochain" target="_blank" rel="noopener" className="text-sm text-[var(--text-muted)] hover:text-white transition-colors">
                 Docs
