@@ -52,8 +52,8 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
     <nav className="fixed top-0 left-0 right-0 z-50 py-3 bg-[rgba(10,10,15,0.9)] backdrop-blur-xl border-b border-[var(--border)]">
       <div className="container mx-auto px-6 flex justify-between items-center gap-6">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-3 text-white font-bold text-xl flex-shrink-0">
-          <span className="text-2xl">🦦</span>
+        <a href="/" className="flex items-center gap-2 text-white font-bold text-xl flex-shrink-0">
+          <img src="/logo.png" alt="OttoChain" className="h-8 w-8 object-contain" />
           <span>OttoChain</span>
         </a>
         
