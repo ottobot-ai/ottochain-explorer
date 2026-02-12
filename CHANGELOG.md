@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.0...v0.3.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* add nginx proxy for GraphQL API ([#32](https://github.com/ottobot-ai/ottochain-explorer/issues/32)) ([44926a8](https://github.com/ottobot-ai/ottochain-explorer/commit/44926a844affa7b4e35745fb1b76f218fe699d1e))
+
 ## [0.3.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.2.0...v0.3.0) (2026-02-12)
 
 
