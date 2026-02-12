@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.2.0...v0.3.0) (2026-02-12)
+
+
+### Features
+
+* update branding with otter logo ([#30](https://github.com/ottobot-ai/ottochain-explorer/issues/30)) ([d1390f4](https://github.com/ottobot-ai/ottochain-explorer/commit/d1390f4b847a21ab7d4e58d24b0cfdef554282e8))
+
+
+### Bug Fixes
+
+* use RELEASE_TOKEN for release-please to trigger CI ([#29](https://github.com/ottobot-ai/ottochain-explorer/issues/29)) ([09ee8b5](https://github.com/ottobot-ai/ottochain-explorer/commit/09ee8b5c1175a4b50a645c223da324312cac216d))
+
 ## [0.2.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.1.0...v0.2.0) (2026-02-10)
 
 
