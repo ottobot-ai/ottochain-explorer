@@ -23,14 +23,30 @@ FROM nginx:alpine
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Custom nginx config for SPA routing
+# Custom nginx config for SPA routing + API proxy
 RUN echo 'server { \
     listen 80; \
     root /usr/share/nginx/html; \
     index index.html; \
+    \
+    # GraphQL API proxy (both HTTP and WebSocket) \
+    location /graphql { \
+        proxy_pass http://gateway:4000/graphql; \
+        proxy_http_version 1.1; \
+        proxy_set_header Host $host; \
+        proxy_set_header X-Real-IP $remote_addr; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+        proxy_set_header Upgrade $http_upgrade; \
+        proxy_set_header Connection "upgrade"; \
+        proxy_read_timeout 86400; \
+    } \
+    \
+    # SPA routing - serve index.html for all non-asset routes \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
+    \
+    # Static assets with long cache \
     location /assets { \
         expires 1y; \
         add_header Cache-Control "public, immutable"; \
