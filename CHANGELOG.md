@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.1...v0.3.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* **ci:** use GH_TOKEN env var for gh CLI ([#34](https://github.com/ottobot-ai/ottochain-explorer/issues/34)) ([7a5e837](https://github.com/ottobot-ai/ottochain-explorer/commit/7a5e837e6f4ddfa128fe7827471a84268f3084af))
+
 ## [0.3.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.0...v0.3.1) (2026-02-12)
 
 
