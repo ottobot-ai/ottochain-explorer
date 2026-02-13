@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.2...v0.3.3) (2026-02-13)
+
+
+### Bug Fixes
+
+* **ci:** use proper gh api syntax for client_payload ([#36](https://github.com/ottobot-ai/ottochain-explorer/issues/36)) ([caae9c2](https://github.com/ottobot-ai/ottochain-explorer/commit/caae9c29af01220614075c7403058df50d625afc))
+
 ## [0.3.2](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.1...v0.3.2) (2026-02-13)
 
 
