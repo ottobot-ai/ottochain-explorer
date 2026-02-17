@@ -4,6 +4,9 @@ import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { FiberStateViewer } from './FiberStateViewer';
+import { 
+  getOracleDefinition
+} from '@ottochain/sdk/apps/oracles';
 
 // Helper to extract value from wrapped objects like {value: "REGISTERED"}
 const unwrapValue = (val: unknown): string => {
@@ -112,16 +115,18 @@ interface FiberDetailData {
   fiber: Fiber | null;
 }
 
-// Oracle state badge colors
+// Oracle state badge colors using SDK definitions
 const oracleStateColors: Record<string, string> = {
+  UNREGISTERED: 'bg-gray-500/20 text-gray-400',
   REGISTERED: 'bg-purple-500/20 text-purple-400',
   ACTIVE: 'bg-green-500/20 text-green-400',
+  SLASHED: 'bg-red-500/20 text-red-400',
+  WITHDRAWN: 'bg-gray-500/20 text-gray-400',
+  // Legacy states for backwards compatibility
   ASSIGNED: 'bg-blue-500/20 text-blue-400',
   SUBMITTED: 'bg-cyan-500/20 text-cyan-400',
   CHALLENGED: 'bg-orange-500/20 text-orange-400',
   SUSPENDED: 'bg-red-500/20 text-red-400',
-  SLASHED: 'bg-red-500/20 text-red-400',
-  WITHDRAWN: 'bg-gray-500/20 text-gray-400',
 };
 
 const getOracleStateColor = (state: string) => 
@@ -156,6 +161,9 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
   const [stateFilter, setStateFilter] = useState<string>('');
   const [sortOption, setSortOption] = useState<'reputation' | 'stake' | 'newest'>('reputation');
   const [activeTab, setActiveTab] = useState<'overview' | 'attestations' | 'pending'>('overview');
+
+  // Get Oracle state machine definition from SDK
+  const oracleDefinition = getOracleDefinition('Oracle');
 
   // Handle external fiber selection
   useEffect(() => {
@@ -684,9 +692,10 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                             </div>
                           </div>
 
-                          {/* State Machine Visualization */}
+                          {/* State Machine Visualization (using SDK Oracle definition) */}
                           {(() => {
-                            const safeDefinition = parseJsonSafely(detail.definition);
+                            // Use fiber definition if available, otherwise fallback to SDK definition
+                            const safeDefinition = parseJsonSafely(detail.definition) || oracleDefinition;
                             if (safeDefinition && typeof safeDefinition === 'object' && 'initialState' in (safeDefinition as Record<string, unknown>)) {
                               return (
                                 <FiberStateViewer 
