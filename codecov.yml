@@ -1,0 +1,29 @@
+coverage:
+  range: 50..85
+  round: down
+  precision: 2
+
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 1%
+        base: auto
+    patch:
+      default:
+        target: 70%
+        threshold: 2%
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+
+ignore:
+  - "src/test/**/*"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.config.js"
+  - "**/*.config.ts"
+  - "vite.config.ts"
+  - "vitest.config.ts"
