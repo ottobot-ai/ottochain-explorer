@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.4.0...v0.4.1) (2026-02-19)
+
+
+### Bug Fixes
+
+* regenerate pnpm-lock.yaml for v0.4.0 release ([3fca974](https://github.com/ottobot-ai/ottochain-explorer/commit/3fca9744160ddf04dc96767771c5780880ed6270))
+
 ## [0.4.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.3...v0.4.0) (2026-02-19)
 
 
