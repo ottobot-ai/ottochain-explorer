@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client/core";
+import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink } from "@apollo/client/core";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
@@ -11,7 +11,7 @@ const httpLink = new HttpLink({
 });
 
 // Build the link - start with just HTTP
-let finalLink = httpLink;
+let finalLink: ApolloLink = httpLink;
 
 // Try to add WebSocket support for subscriptions (won't break if it fails)
 if (typeof window !== "undefined") {
