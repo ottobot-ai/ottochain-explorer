@@ -1,6 +1,8 @@
 import React from 'react';
-import { MockedProvider, MockedResponse } from '@apollo/client/testing';
-import { render, RenderOptions } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing';
+import type { MockedResponse } from '@apollo/client/testing';
+import { render } from '@testing-library/react';
+import type { RenderOptions } from '@testing-library/react';
 
 /**
  * Custom render function that wraps components with Apollo MockedProvider
