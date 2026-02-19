@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.3...v0.4.0) (2026-02-19)
+
+
+### Features
+
+* Oracle view SDK integration ([#39](https://github.com/ottobot-ai/ottochain-explorer/issues/39)) ([177f3dc](https://github.com/ottobot-ai/ottochain-explorer/commit/177f3dc71f53e410c54b8d4e8785fa9ab28b2054))
+* **tests:** add React component testing with Vitest ([#40](https://github.com/ottobot-ai/ottochain-explorer/issues/40)) ([4a03df5](https://github.com/ottobot-ai/ottochain-explorer/commit/4a03df5271fdd415e0b03bb20c69adf02e360456))
+
 ## [0.3.3](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.3.2...v0.3.3) (2026-02-13)
 
 
