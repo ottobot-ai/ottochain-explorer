@@ -24,8 +24,10 @@ interface RejectionsResponse {
   hasMore: boolean;
 }
 
-// Get indexer URL from environment or default
-const INDEXER_URL = import.meta.env.VITE_INDEXER_URL || 'http://localhost:3010';
+import config from '../config';
+
+// Get indexer URL from runtime config
+const INDEXER_URL = config.INDEXER_URL;
 
 interface RejectionsViewProps {
   onFiberSelect?: (fiberId: string) => void;
