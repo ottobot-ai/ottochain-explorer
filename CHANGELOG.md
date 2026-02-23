@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.4.1...v0.5.0) (2026-02-23)
+
+
+### Features
+
+* **ci:** use pre-built JARs from versions.yaml instead of building from source ([#45](https://github.com/ottobot-ai/ottochain-explorer/issues/45)) ([6306b8d](https://github.com/ottobot-ai/ottochain-explorer/commit/6306b8d6358a7c1c517eed035fc719f09759dd2b))
+
 ## [0.4.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.4.0...v0.4.1) (2026-02-19)
 
 
