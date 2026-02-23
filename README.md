@@ -20,13 +20,19 @@ Real-time blockchain visualization for OttoChain metagraph.
 # Install dependencies
 pnpm install
 
-# Set up environment
-cp .env.example .env
-# Edit .env to point to your gateway/bridge
+# Set up environment (local dev needs direct URLs, not nginx proxies)
+cp .env.example .env.local
+# Edit .env.local with your actual endpoints:
+#   VITE_GRAPHQL_URL=http://localhost:4000/graphql
+#   VITE_BRIDGE_URL=http://localhost:3030
+#   VITE_INDEXER_URL=http://localhost:3031
 
 # Start dev server
 pnpm dev
 ```
+
+> **Note:** The default `public/config.js` uses nginx proxy paths (`/graphql`, `/api/bridge/`).
+> For local dev without nginx, you must set `VITE_*` vars in `.env.local`.
 
 ### Docker
 
@@ -47,12 +53,24 @@ pnpm build
 
 ## Configuration
 
+### Build-time (Vite)
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_API_URL` | Gateway GraphQL endpoint | `http://localhost:4000` |
-| `VITE_WS_URL` | Gateway WebSocket endpoint | `ws://localhost:4000` |
-| `VITE_BRIDGE_URL` | Bridge REST endpoint | `http://localhost:3030` |
+| `VITE_GRAPHQL_URL` | Gateway GraphQL endpoint | `/graphql` (nginx proxy) |
+| `VITE_BRIDGE_URL` | Bridge REST endpoint | `/api/bridge` (nginx proxy) |
+| `VITE_INDEXER_URL` | Indexer REST endpoint | `/api/indexer` (nginx proxy) |
 | `EXPLORER_PORT` | Docker container port | `8080` |
+
+### Runtime (Docker only)
+
+| Variable | Description | Injected by |
+|----------|-------------|-------------|
+| `GRAPHQL_URL` | Override GraphQL endpoint | `docker-entrypoint.sh` |
+| `BRIDGE_URL` | Override Bridge endpoint | `docker-entrypoint.sh` |
+| `INDEXER_URL` | Override Indexer endpoint | `docker-entrypoint.sh` |
+
+Runtime variables (no `VITE_` prefix) are injected into `public/config.js` at container startup, overriding build-time defaults.
 
 ## Architecture
 
