@@ -6,17 +6,24 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      ottochain_version:
+        description: 'OttoChain metagraph version override (e.g., 0.7.6)'
+        required: false
+        type: string
+      tessellation_version:
+        description: 'Tessellation version override (e.g., v4.0.0-rc.2)'
+        required: false
+        type: string
 
 env:
-  TESSELLATION_VERSION: v4.0.0-rc.2
   NODE_VERSION: '20'
-  JAVA_VERSION: '21'
 
 jobs:
   integration-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -43,6 +50,12 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          docker system prune -af --volumes || true
+          df -h /
+
       - name: Checkout explorer
         uses: actions/checkout@v4
 
@@ -53,30 +66,88 @@ jobs:
           path: services
           ref: main
 
-      - name: Checkout ottochain
-        uses: actions/checkout@v4
-        with:
-          repository: scasplte2/ottochain
-          path: ottochain
-          ref: main
+      # ── Resolve versions from deploy repo's versions.yaml ──────────────
+      - name: Fetch versions.yaml
+        id: versions
+        run: |
+          echo "Fetching versions.yaml from ottochain-deploy..."
+          curl -sf -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://raw.githubusercontent.com/ottobot-ai/ottochain-deploy/main/versions.yaml" \
+            -o versions.yaml
 
+          OTTOCHAIN_VER="${{ inputs.ottochain_version }}"
+          TESS_VER="${{ inputs.tessellation_version }}"
+
+          if [ -z "$OTTOCHAIN_VER" ]; then
+            OTTOCHAIN_VER=$(grep -A1 'ottochain:' versions.yaml | grep 'version:' | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          fi
+          if [ -z "$TESS_VER" ]; then
+            TESS_VER=$(grep -A1 'tessellation:' versions.yaml | grep 'version:' | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          fi
+
+          [[ "$TESS_VER" != v* ]] && TESS_VER="v${TESS_VER}"
+
+          echo "ottochain_version=${OTTOCHAIN_VER}" >> $GITHUB_OUTPUT
+          echo "tessellation_version=${TESS_VER}" >> $GITHUB_OUTPUT
+          echo "Resolved versions: OttoChain=${OTTOCHAIN_VER}, Tessellation=${TESS_VER}"
+
+      # ── Checkout tessellation (for compose infrastructure only) ────────
       - name: Checkout tessellation
         uses: actions/checkout@v4
         with:
           repository: Constellation-Labs/tessellation
           path: tessellation
-          ref: ${{ env.TESSELLATION_VERSION }}
+          ref: ${{ steps.versions.outputs.tessellation_version }}
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: sbt
+      # ── Download pre-built JARs instead of building from source ────────
+      - name: Download pre-built JARs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TESS_VER: ${{ steps.versions.outputs.tessellation_version }}
+          OTTO_VER: ${{ steps.versions.outputs.ottochain_version }}
+        run: |
+          # Download tessellation release JARs
+          echo "Downloading tessellation ${TESS_VER} release JARs..."
+          gh release download "${TESS_VER}" \
+            --repo Constellation-Labs/tessellation \
+            --pattern "cl-node.jar" \
+            --pattern "cl-dag-l1.jar" \
+            --pattern "cl-keytool.jar" \
+            --pattern "cl-wallet.jar" \
+            --dir /tmp/tess-jars/ \
+            --clobber
 
-      - name: Setup sbt
-        uses: sbt/setup-sbt@v1
+          # Download OttoChain release JARs
+          echo "Downloading OttoChain v${OTTO_VER} release JARs..."
+          gh release download "v${OTTO_VER}" \
+            --repo scasplte2/ottochain \
+            --pattern "metagraph-l0-*.jar" \
+            --pattern "currency-l1-*.jar" \
+            --pattern "data-l1-*.jar" \
+            --dir /tmp/otto-jars/ \
+            --clobber
 
+          # Tessellation JARs → modules/*/target/scala-2.13/
+          for mod in dag-l0 dag-l1 keytool wallet; do
+            mkdir -p tessellation/modules/${mod}/target/scala-2.13
+          done
+          cp /tmp/tess-jars/cl-node.jar     tessellation/modules/dag-l0/target/scala-2.13/tessellation-dag-l0-assembly-prebuilt.jar
+          cp /tmp/tess-jars/cl-dag-l1.jar   tessellation/modules/dag-l1/target/scala-2.13/tessellation-dag-l1-assembly-prebuilt.jar
+          cp /tmp/tess-jars/cl-keytool.jar  tessellation/modules/keytool/target/scala-2.13/tessellation-keytool-assembly-prebuilt.jar
+          cp /tmp/tess-jars/cl-wallet.jar   tessellation/modules/wallet/target/scala-2.13/tessellation-wallet-assembly-prebuilt.jar
+
+          # OttoChain JARs → dummy metagraph dir
+          DUMMY_META=/tmp/metagraph-dummy
+          for mod in l0 l1 data_l1; do
+            mkdir -p $DUMMY_META/modules/${mod}/target/scala-2.13
+          done
+          cp /tmp/otto-jars/metagraph-l0-*.jar $DUMMY_META/modules/l0/target/scala-2.13/ottochain-currency-l0-assembly-prebuilt.jar
+          cp /tmp/otto-jars/currency-l1-*.jar  $DUMMY_META/modules/l1/target/scala-2.13/ottochain-currency-l1-assembly-prebuilt.jar
+          cp /tmp/otto-jars/data-l1-*.jar      $DUMMY_META/modules/data_l1/target/scala-2.13/ottochain-data-l1-assembly-prebuilt.jar
+
+          echo "✅ All JARs staged for compose-runner"
+
+      # ── Setup for builds ──────────────────────────────────────────────
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -109,68 +180,38 @@ jobs:
           DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
         run: pnpm db:push --skip-generate
 
-      # Cache and build tessellation
-      - name: Cache tessellation assemblies
-        uses: actions/cache@v4
-        with:
-          path: |
-            tessellation/modules/*/target
-            tessellation/docker/jars
-          key: tessellation-${{ env.TESSELLATION_VERSION }}-${{ hashFiles('tessellation/build.sbt') }}
-          restore-keys: |
-            tessellation-${{ env.TESSELLATION_VERSION }}-
-
-      - name: Build tessellation
-        working-directory: tessellation
-        run: |
-          sbt "sdk/publishLocal; keytool/assembly; wallet/assembly; shared/assembly; \
-               dagL0/assembly; dagL1/assembly; currencyL0/assembly; currencyL1/assembly"
-          mkdir -p docker/jars
-          cp modules/keytool/target/scala-2.13/tessellation-keytool-assembly*.jar docker/jars/keytool.jar
-          cp modules/wallet/target/scala-2.13/tessellation-wallet-assembly*.jar docker/jars/wallet.jar
-          cp modules/dag-l0/target/scala-2.13/tessellation-dag-l0-assembly*.jar docker/jars/gl0.jar
-          cp modules/dag-l1/target/scala-2.13/tessellation-dag-l1-assembly*.jar docker/jars/gl1.jar
-          cp modules/currency-l0/target/scala-2.13/tessellation-currency-l0-assembly*.jar docker/jars/ml0.jar
-          cp modules/currency-l1/target/scala-2.13/tessellation-currency-l1-assembly*.jar docker/jars/cl1.jar
-
-      - name: Build ottochain metagraph
-        working-directory: ottochain
-        run: |
-          sbt "currencyL0/assembly; dataL1/assembly"
-
+      # ── Start metagraph cluster from pre-built JARs ───────────────────
       - name: Start metagraph cluster
         working-directory: tessellation/docker
         run: |
           chmod +x bin/*.sh
-          ./bin/compose-runner.sh --up --metagraph=$(pwd)/../../ottochain --dl1 --skip-assembly
+          SKIP_METAGRAPH_ASSEMBLY=true PUBLISH=false \
+            ./bin/compose-runner.sh --up --skip-assembly --metagraph=/tmp/metagraph-dummy --dl1
 
       - name: Wait for metagraph healthy
         run: |
           echo "=== Waiting for GL0 ==="
           for i in {1..90}; do
             if curl -s http://localhost:9000/node/info | grep -q '"state":"Ready"'; then
-              echo "GL0 ready after ${i}s"
-              break
+              echo "GL0 ready after ${i}s"; break
             fi
             sleep 1
             if [ $i -eq 90 ]; then echo "GL0 timeout"; exit 1; fi
           done
-          
-          echo "=== Waiting for ML0 (may take longer on CI) ==="
+
+          echo "=== Waiting for ML0 ==="
           for i in {1..180}; do
             if curl -s http://localhost:9200/node/info | grep -q '"state":"Ready"'; then
-              echo "ML0 ready after ${i}s"
-              break
+              echo "ML0 ready after ${i}s"; break
             fi
             sleep 1
             if [ $i -eq 180 ]; then echo "ML0 timeout"; exit 1; fi
           done
-          
+
           echo "=== Waiting for DL1 ==="
           for i in {1..180}; do
             if curl -s http://localhost:9400/node/info | grep -q '"state":"Ready"'; then
-              echo "DL1 ready after ${i}s"
-              break
+              echo "DL1 ready after ${i}s"; break
             fi
             sleep 1
             if [ $i -eq 180 ]; then echo "DL1 timeout"; exit 1; fi
@@ -208,7 +249,6 @@ jobs:
           GATEWAY_URL: http://localhost:4000
           ML0_URL: http://localhost:9200
         run: |
-          # Test GraphQL endpoint is reachable
           echo "Testing GraphQL endpoint..."
           RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
@@ -216,8 +256,7 @@ jobs:
           echo "Response: $RESPONSE"
           echo "$RESPONSE" | grep -q "Query" || { echo "❌ Failed: expected 'Query' in response"; exit 1; }
           echo "✅ GraphQL introspection works"
-          
-          # Test networkStats query (dashboard data)
+
           echo "Testing networkStats query..."
           RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
@@ -225,8 +264,7 @@ jobs:
           echo "Response: $RESPONSE"
           echo "$RESPONSE" | grep -q "networkStats" || { echo "❌ Failed: expected 'networkStats' in response"; exit 1; }
           echo "✅ NetworkStats query works"
-          
-          # Test fibers query (fiberId not id)
+
           echo "Testing fibers query..."
           RESPONSE=$(curl -s http://localhost:4000/graphql \
             -H "Content-Type: application/json" \
@@ -234,13 +272,16 @@ jobs:
           echo "Response: $RESPONSE"
           echo "$RESPONSE" | grep -q "fibers" || { echo "❌ Failed: expected 'fibers' in response"; exit 1; }
           echo "✅ Fibers query works"
-          
+
           echo ""
           echo "All GraphQL integration tests passed! ✅"
 
       - name: Collect logs on failure
         if: failure()
         run: |
+          echo "=== Versions ==="
+          echo "OttoChain: ${{ steps.versions.outputs.ottochain_version }}"
+          echo "Tessellation: ${{ steps.versions.outputs.tessellation_version }}"
           echo "=== Container list ==="
           docker ps -a || true
           echo "=== GL0 Logs ==="
@@ -256,3 +297,14 @@ jobs:
         run: |
           chmod +x bin/*.sh 2>/dev/null || true
           ./bin/compose-runner.sh --down || true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Integration Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Version | Source |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| OttoChain | ${{ steps.versions.outputs.ottochain_version }} | GitHub Release JAR |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tessellation | ${{ steps.versions.outputs.tessellation_version }} | GitHub Release JAR |" >> $GITHUB_STEP_SUMMARY
+          echo "| Explorer | $(git rev-parse --short HEAD) | Built from source |" >> $GITHUB_STEP_SUMMARY
