@@ -57,10 +57,10 @@ jobs:
           df -h /
 
       - name: Checkout explorer
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout ottochain-services
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ottobot-ai/ottochain-services
           path: services
@@ -93,7 +93,7 @@ jobs:
 
       # ── Checkout tessellation (for compose infrastructure only) ────────
       - name: Checkout tessellation
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: Constellation-Labs/tessellation
           path: tessellation
