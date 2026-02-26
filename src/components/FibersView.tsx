@@ -5,14 +5,6 @@ import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { FiberStateViewer } from './FiberStateViewer';
 
-// Helper to extract value from wrapped objects like {value: "REGISTERED"}
-const unwrapValue = (val: unknown): string => {
-  if (val && typeof val === 'object' && 'value' in val) {
-    return String((val as { value: unknown }).value);
-  }
-  return String(val ?? '');
-};
-
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
     workflowTypes {
@@ -85,8 +77,8 @@ interface Fiber {
   updatedAt: string;
   stateData?: Record<string, unknown>;
   definition?: {
-    states: Record<string, { id: { value: string }; isFinal: boolean }>;
-    transitions: Array<{ from: { value: string }; to: { value: string }; eventName: string }>;
+    states: Record<string, { id: string; isFinal: boolean }>;
+    transitions: Array<{ from: string; to: string; eventName: string }>;
   };
   transitions?: Array<{
     eventName: string;
@@ -362,18 +354,18 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(unwrapValue(fiber.workflowType))}`}>
-                          {unwrapValue(fiber.workflowType)}
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(String(fiber.workflowType))}`}>
+                          {String(fiber.workflowType)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(unwrapValue(fiber.currentState))}`}>
-                          {unwrapValue(fiber.currentState)}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(String(fiber.currentState))}`}>
+                          {String(fiber.currentState)}
                         </span>
                       </div>
                       <div className="text-sm font-mono text-[var(--text-muted)] mt-1 truncate">
-                        {unwrapValue(fiber.fiberId)}
+                        {String(fiber.fiberId)}
                       </div>
                       <div className="text-xs text-[var(--text-muted)] mt-1">
-                        Owner: {unwrapValue(fiber.owners?.[0])?.slice(0, 12)}... • Seq #{fiber.sequenceNumber}
+                        Owner: {String(fiber.owners?.[0])?.slice(0, 12)}... • Seq #{fiber.sequenceNumber}
                       </div>
                     </div>
                     <div className="text-xs text-[var(--text-muted)]">
@@ -422,20 +414,20 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                       {/* Type & State */}
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(unwrapValue(detail.workflowType) || 'Unknown')}`}>
-                            {unwrapValue(detail.workflowType) || 'Unknown'}
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(String(detail.workflowType) || 'Unknown')}`}>
+                            {String(detail.workflowType) || 'Unknown'}
                           </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(unwrapValue(detail.currentState) || 'unknown')}`}>
-                            {unwrapValue(detail.currentState) || 'Unknown'}
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(String(detail.currentState) || 'unknown')}`}>
+                            {String(detail.currentState) || 'Unknown'}
                           </span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            unwrapValue(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                            String(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
                           }`}>
-                            {unwrapValue(detail.status) || 'Unknown'}
+                            {String(detail.status) || 'Unknown'}
                           </span>
                         </div>
                         <div className="text-xs font-mono text-[var(--text-muted)] break-all">
-                          {unwrapValue(detail.fiberId)}
+                          {String(detail.fiberId)}
                         </div>
                       </div>
 
@@ -443,7 +435,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                       <div>
                         <div className="text-xs text-[var(--text-muted)] mb-1">Owner</div>
                         <div className="text-sm font-mono text-[var(--text-primary)] break-all">
-                          {unwrapValue(detail.owners?.[0]) || 'Unknown'}
+                          {String(detail.owners?.[0]) || 'Unknown'}
                         </div>
                       </div>
 
@@ -506,7 +498,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                       {safeDefinition && typeof safeDefinition === 'object' && 'initialState' in safeDefinition && (
                         <FiberStateViewer 
                           definition={safeDefinition as any}
-                          currentState={unwrapValue(detail.currentState)}
+                          currentState={String(detail.currentState)}
                           className="max-h-48"
                         />
                       )}
@@ -520,14 +512,14 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                               <span
                                 key={key}
                                 className={`text-xs px-2 py-1 rounded-full border ${
-                                  unwrapValue(detail.currentState) === unwrapValue(state?.id)
+                                  String(detail.currentState) === String(state?.id)
                                     ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--accent)]'
                                     : state?.isFinal
                                     ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                                     : 'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]'
                                 }`}
                               >
-                                {unwrapValue(state?.id) || key} {state?.isFinal && '✓'}
+                                {String(state?.id) || key} {state?.isFinal && '✓'}
                               </span>
                             ))}
                           </div>
@@ -542,9 +534,9 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                             {detail.transitions.map((t: any, i: number) => (
                               <div key={i} className="text-xs bg-[var(--bg-elevated)] p-2 rounded-lg">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-[var(--text-muted)]">{unwrapValue(t?.fromState) || 'Unknown'}</span>
+                                  <span className="text-[var(--text-muted)]">{String(t?.fromState) || 'Unknown'}</span>
                                   <span className="text-[var(--accent)]">→</span>
-                                  <span className="text-[var(--text-primary)]">{unwrapValue(t?.toState) || 'Unknown'}</span>
+                                  <span className="text-[var(--text-primary)]">{String(t?.toState) || 'Unknown'}</span>
                                 </div>
                                 <div className="text-[var(--text-muted)] mt-1">
                                   {t?.eventName || 'Unknown'} • {t?.success ? '✓' : '✗'} • {t?.gasUsed || 0} gas

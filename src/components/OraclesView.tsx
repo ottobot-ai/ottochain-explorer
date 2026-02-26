@@ -8,14 +8,6 @@ import {
   getOracleDefinition
 } from '@ottochain/sdk/apps/oracles';
 
-// Helper to extract value from wrapped objects like {value: "REGISTERED"}
-const unwrapValue = (val: unknown): string => {
-  if (val && typeof val === 'object' && 'value' in val) {
-    return String((val as { value: unknown }).value);
-  }
-  return String(val ?? '');
-};
-
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
     workflowTypes {
@@ -89,8 +81,8 @@ interface Fiber {
   updatedAt: string;
   stateData?: Record<string, unknown>;
   definition?: {
-    states: Record<string, { id: { value: string }; isFinal: boolean }>;
-    transitions: Array<{ from: { value: string }; to: { value: string }; eventName: string }>;
+    states: Record<string, { id: string; isFinal: boolean }>;
+    transitions: Array<{ from: string; to: string; eventName: string }>;
   };
   transitions?: Array<{
     eventName: string;
@@ -190,7 +182,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
     // Filter by state
     if (stateFilter) {
       result = result.filter(fiber => 
-        unwrapValue(fiber.currentState).toUpperCase() === stateFilter.toUpperCase()
+        String(fiber.currentState).toUpperCase() === stateFilter.toUpperCase()
       );
     }
 
@@ -253,7 +245,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
       totalResolutions += reputation?.totalResolutions ?? 0;
       totalStake += (stateData?.stake as number) ?? 0;
       
-      const state = unwrapValue(oracle.currentState).toUpperCase();
+      const state = String(oracle.currentState).toUpperCase();
       if (state === 'ACTIVE') activeCount++;
       if (state === 'ASSIGNED') pendingCount++;
     });
@@ -275,7 +267,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
   const oracleStates = useMemo(() => {
     const states = new Set<string>();
     (fibersData?.fibers || []).forEach(fiber => {
-      states.add(unwrapValue(fiber.currentState).toUpperCase());
+      states.add(String(fiber.currentState).toUpperCase());
     });
     return Array.from(states).sort();
   }, [fibersData?.fibers]);
@@ -410,7 +402,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                   disputesLost?: number;
                 } | undefined;
                 const domains = stateData?.domains as string[] | undefined;
-                const currentState = unwrapValue(oracle.currentState);
+                const currentState = String(oracle.currentState);
                 const repBadge = getReputationBadge(reputation?.accuracy ?? 0);
 
                 return (
@@ -556,7 +548,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                       marketId?: string;
                       timestamp?: string;
                     }> | undefined;
-                    const currentState = unwrapValue(detail.currentState);
+                    const currentState = String(detail.currentState);
                     const repBadge = getReputationBadge(reputation?.accuracy ?? 0);
 
                     if (activeTab === 'overview') {
@@ -572,9 +564,9 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                                 {repBadge.label}
                               </span>
                               <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                unwrapValue(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                String(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
                               }`}>
-                                {unwrapValue(detail.status)}
+                                {String(detail.status)}
                               </span>
                             </div>
                             <div className="text-xs font-mono text-[var(--text-muted)] break-all">
@@ -736,9 +728,9 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                                    <span>{unwrapValue(t.fromState)}</span>
+                                    <span>{String(t.fromState)}</span>
                                     <span className="text-[var(--accent)]">→</span>
-                                    <span>{unwrapValue(t.toState)}</span>
+                                    <span>{String(t.toState)}</span>
                                   </div>
                                   <div className="text-xs text-[var(--text-muted)] mt-1">
                                     {new Date(t.createdAt).toLocaleString()} • {t.gasUsed} gas
@@ -758,9 +750,9 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                                 {detail.transitions.filter(t => !attestationHistory.includes(t)).map((t, i) => (
                                   <div key={i} className="bg-[var(--bg-elevated)] rounded-lg p-2 text-xs">
                                     <div className="flex items-center gap-1">
-                                      <span className="text-[var(--text-muted)]">{unwrapValue(t.fromState)}</span>
+                                      <span className="text-[var(--text-muted)]">{String(t.fromState)}</span>
                                       <span className="text-[var(--accent)]">→</span>
-                                      <span className="text-[var(--text-primary)]">{unwrapValue(t.toState)}</span>
+                                      <span className="text-[var(--text-primary)]">{String(t.toState)}</span>
                                       <span className="text-[var(--text-muted)] ml-auto">{t.eventName}</span>
                                     </div>
                                   </div>

@@ -1,16 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 
-// Helper to extract value from wrapped objects like {value: "REGISTERED"}
-const unwrapValue = (val: unknown): string => {
-  if (val && typeof val === 'object' && 'value' in val) {
-    return String((val as { value: unknown }).value);
-  }
-  return String(val ?? '');
-};
-
 interface StateDefinition {
   name?: string;
-  id?: { value: string } | string;
+  id?: string;
   isFinal?: boolean;
   metadata?: { description?: string } | null;
   actions?: Array<{
@@ -22,12 +14,12 @@ interface StateDefinition {
 
 interface StateMachineDefinition {
   metadata?: { name?: string; description?: string } | null;
-  initialState: string | { value: string };
+  initialState: string;
   states: Record<string, StateDefinition>;
   transitions?: Array<{
     eventName: string;
-    from: string | { value: string };
-    to: string | { value: string };
+    from: string;
+    to: string;
   }>;
 }
 
@@ -112,7 +104,7 @@ export function FiberStateViewer({
     }
     
     // Unwrap initialState if it's an object
-    const initialStateName = unwrapValue(definition.initialState);
+    const initialStateName = String(definition.initialState);
     
     const states = Object.entries(definition.states);
     const stateNames = states.map(([name]) => name);
@@ -136,8 +128,8 @@ export function FiberStateViewer({
     // Also check transitions array (new format from API)
     if (definition.transitions) {
       definition.transitions.forEach(t => {
-        const from = unwrapValue(t.from);
-        const to = unwrapValue(t.to);
+        const from = String(t.from);
+        const to = String(t.to);
         if (stateNames.includes(from) && stateNames.includes(to)) {
           // Avoid duplicates
           if (!edgeList.some(e => e.from === from && e.to === to && e.label === t.eventName)) {
