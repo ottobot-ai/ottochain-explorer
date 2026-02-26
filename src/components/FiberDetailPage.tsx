@@ -4,14 +4,6 @@ import { useQuery } from '@apollo/client/react';
 import { FiberStateViewer } from './FiberStateViewer';
 import { CopyAddress } from './CopyAddress';
 
-// Helper to extract value from wrapped objects like {value: "REGISTERED"}
-const unwrapValue = (val: unknown): string => {
-  if (val && typeof val === 'object' && 'value' in val) {
-    return String((val as { value: unknown }).value);
-  }
-  return String(val ?? '');
-};
-
 const GET_FIBER = gql`
   query GetFiber($fiberId: String!) {
     fiber(fiberId: $fiberId) {
@@ -272,7 +264,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
 
   // Determine which schema-specific view to use
   const renderStateView = () => {
-    switch (unwrapValue(fiber.workflowType)) {
+    switch (String(fiber.workflowType)) {
       case 'AgentIdentity':
         return <AgentIdentityView stateData={stateData} onAgentClick={onAgentClick} />;
       case 'Contract':
@@ -296,8 +288,8 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-3">
-            <span className={`px-2 py-1 rounded text-xs font-medium ${getWorkflowBadgeColor(unwrapValue(fiber.workflowType))}`}>
-              {unwrapValue(fiber.workflowType)}
+            <span className={`px-2 py-1 rounded text-xs font-medium ${getWorkflowBadgeColor(String(fiber.workflowType))}`}>
+              {String(fiber.workflowType)}
             </span>
             <div>
               <div className="font-mono text-sm">{fiber.fiberId}</div>
@@ -343,7 +335,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
               {definition && definition.initialState && definition.states ? (
                 <FiberStateViewer 
                   definition={definition} 
-                  currentState={unwrapValue(fiber.currentState)}
+                  currentState={String(fiber.currentState)}
                 />
               ) : definition ? (
                 <div className="bg-[var(--bg-elevated)] rounded-lg p-4">
@@ -361,7 +353,7 @@ export function FiberDetailPage({ fiberId, onClose, onAgentClick }: FiberDetailP
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium">Current State</h3>
                   <span className="px-2 py-1 bg-[var(--accent)] rounded text-xs font-medium">
-                    {unwrapValue(fiber.currentState)}
+                    {String(fiber.currentState)}
                   </span>
                 </div>
                 {renderStateView()}
