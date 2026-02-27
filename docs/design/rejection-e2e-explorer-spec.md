@@ -4,6 +4,7 @@
 **Status:** Specification Writing → Test Definition  
 **Author:** @think (2026-02-22)  
 **Repo:** `ottobot-ai/ottochain-explorer`  
+**Updated:** 2026-02-27 — Addressed review feedback
 
 ---
 
@@ -24,7 +25,7 @@ The rejection notification pipeline backend is tested by PR #119 (E2E, 20 assert
 `RejectionsView.tsx` is a fully-implemented React component that:
 - Fetches from `${INDEXER_URL}/rejections?limit=20&offset=N&updateType=...&fiberId=...`
 - Displays a paginated list of rejected transactions
-- Filters by updateType (dropdown) and fiberId (text input)
+- Filters by updateType (dropdown) and fiberId (text input, **300ms debounce**)
 - Shows a detail modal on row click: fiberId, updateHash, ordinal, timestamp, signers, errors
 - Error badge colors: `*NotSigned*|*Owner*` → red; `*NotFound*|*Nothing*` → yellow; `*Invalid*` → orange; other → purple
 - Has loading, empty (two variants), and error states with retry
@@ -54,7 +55,7 @@ interface RejectedTransaction {
   fiberId: string;          // UUID
   updateHash: string;       // hex hash
   errors: { code: string; message: string }[];
-  signers: string[];        // wallet addresses
+  signers: string[];        // DAG wallet addresses (DAG prefix, NOT 0x)
   createdAt: string;        // ISO 8601
 }
 ```
@@ -64,7 +65,7 @@ interface RejectedTransaction {
 - **Framework:** vitest + React Testing Library
 - **Config:** `vitest.config.ts` (existing)
 - **Setup:** `src/test/setup.ts` (existing — imports vitest matchers)
-- **Mocks:** `src/test/mocks.tsx` (existing — check for MSW or fetch mocks)
+- **Mocks:** Use `vi.spyOn(global, 'fetch')` — no MSW currently configured
 - **Existing tests:** `AgentAvatar.test.tsx`, `CopyAddress.test.tsx`, `Sparkline.test.tsx`
 
 ---
@@ -88,7 +89,7 @@ const mockRejection: RejectedTransaction = {
   errors: [
     { code: 'UpdateNotSignedByOwner', message: 'Transaction not signed by fiber owner' }
   ],
-  signers: ['0xDADA1234...ABCD'],
+  signers: ['DAG4test1234abcd5678efgh9012ijkl3456mnop'],  // Constellation DAG address format
   createdAt: '2026-02-22T20:00:00.000Z'
 };
 
@@ -107,16 +108,19 @@ const emptyResponse: RejectionsResponse = {
 
 ---
 
-## Test Cases (15 total, TDD-First — write BEFORE implementation)
+## Test Cases (18 total, TDD-First — write BEFORE implementation)
 
 ### Group 1: Loading & Error States (3 tests)
 
 ```
 1. Shows loading spinner when fetch is in-flight and rejections list is empty
-   - Mock fetch to return a never-resolving Promise
+   - Use vi.useFakeTimers() to control async timing
+   - Mock fetch to return a Promise that doesn't resolve during the test
    - Render <RejectionsView />
-   - Expect: spinner element visible (animate-spin or aria-label="loading")
+   - Expect: spinner element visible immediately (loading state is synchronous on mount)
    - Expect: rejection rows NOT in document
+   - Note: Use { timeout: 1000 } on the test to avoid hanging — RTL render is
+     synchronous so spinner should be visible before any fetch resolves
 
 2. Shows error state with Retry button when fetch fails
    - Mock fetch to reject with Error('Network error')
@@ -132,7 +136,7 @@ const emptyResponse: RejectionsResponse = {
    - Expect: "Try adjusting your filters" text NOT visible (no active filters)
 ```
 
-### Group 2: Data Display (3 tests)
+### Group 2: Data Display (4 tests)
 
 ```
 4. Renders rejection list with updateType, shortened fiberId, error badges
@@ -142,15 +146,24 @@ const emptyResponse: RejectionsResponse = {
    - Expect: shortened fiberId ('f47ac10b...c3d479') visible
    - Expect: 'UpdateNotSignedByOwner' badge visible
 
-5. Error badge color coding — red for Owner/NotSigned errors
+5. Error badge severity — uses data-testid for semantic testing (not CSS classes)
    - Mock fetch with rejection { errors: [{ code: 'UpdateNotSignedByOwner', ... }] }
-   - Expect: badge has class containing 'red'
+   - Expect: getByTestId('error-badge-critical') exists OR aria-label contains 'critical'
    - Mock fetch with rejection { errors: [{ code: 'FiberNotFound', ... }] }
-   - Expect: badge has class containing 'yellow'
+   - Expect: getByTestId('error-badge-warning') exists OR aria-label contains 'warning'
    - Mock fetch with rejection { errors: [{ code: 'InvalidTransition', ... }] }
-   - Expect: badge has class containing 'orange'
+   - Expect: getByTestId('error-badge-error') exists OR aria-label contains 'error'
+   
+   **Implementation note:** If RejectionsView.tsx currently uses CSS classes without
+   test IDs, add data-testid="error-badge-{severity}" as part of implementing this test.
+   Do NOT test CSS class names directly (e.g., 'red', 'yellow') — they are brittle.
 
-6. Shows "+N more" badge when rejection has more than 3 errors
+6. Purple badge fallback for unknown error codes
+   - Mock fetch with rejection { errors: [{ code: 'SequenceNumberMismatch', ... }] }
+   - Expect: getByTestId('error-badge-info') exists OR aria-label contains 'info'
+   - This tests the "other → purple" default branch
+
+7. Shows "+N more" badge when rejection has more than 3 errors
    - Mock fetch with rejection having 5 errors
    - Expect: first 3 error code badges visible
    - Expect: "+2 more" text visible
@@ -160,30 +173,34 @@ const emptyResponse: RejectionsResponse = {
 ### Group 3: Filters (3 tests)
 
 ```
-7. updateType dropdown filter adds query param to API request
+8. updateType dropdown filter adds query param to API request
    - Mock fetch to capture request URL
    - Render <RejectionsView />
    - Select 'TransitionStateMachine' from dropdown
    - Expect: second fetch called with URL containing 'updateType=TransitionStateMachine'
    - Expect: offset reset to 0 on filter change
 
-8. fiberId text input filter adds query param to API request
+9. fiberId text input filter adds query param to API request (with debounce)
+   - Use vi.useFakeTimers()
    - Render <RejectionsView />
    - Type 'f47ac10b' into fiberId input
-   - Wait for debounce (if any) or fire change event
+   - Advance timers by 350ms (debounce is 300ms): vi.advanceTimersByTime(350)
    - Expect: fetch called with URL containing 'fiberId=f47ac10b'
+   
+   **Note:** The component debounces fiberId input by 300ms. Tests MUST use fake
+   timers and advance past the debounce threshold, or the fetch won't fire.
 
-9. Filtered empty state shows secondary message
-   - Set filterType = 'TransitionStateMachine'
-   - Mock fetch to return emptyResponse
-   - Expect: "No rejected transactions found" visible
-   - Expect: "Try adjusting your filters" also visible (secondary hint)
+10. Filtered empty state shows secondary message
+    - Set filterType = 'TransitionStateMachine'
+    - Mock fetch to return emptyResponse
+    - Expect: "No rejected transactions found" visible
+    - Expect: "Try adjusting your filters" also visible (secondary hint)
 ```
 
-### Group 4: Detail Modal (3 tests)
+### Group 4: Detail Modal (4 tests)
 
 ```
-10. Clicking a rejection row opens the detail modal
+11. Clicking a rejection row opens the detail modal
     - Mock fetch to return mockResponse
     - Render <RejectionsView />
     - Click on the rejection row
@@ -192,38 +209,55 @@ const emptyResponse: RejectionsResponse = {
     - Expect: 'UpdateNotSignedByOwner' error code visible in modal
     - Expect: error message 'Transaction not signed by fiber owner' visible
 
-11. Clicking ✕ closes the detail modal
+12. Clicking ✕ button closes the detail modal
     - Open modal (click rejection row)
-    - Click ✕ button
+    - Click ✕ button (getByRole('button', { name: /close/i }) or getByLabelText('Close'))
     - Expect: modal no longer visible
 
-12. Clicking fiberId in detail modal fires onFiberSelect callback
+13. Pressing Escape key closes the detail modal
+    - Open modal (click rejection row)
+    - fireEvent.keyDown(document, { key: 'Escape' })
+    - Expect: modal no longer visible
+
+14. Clicking fiberId in detail modal fires onFiberSelect callback (if prop exists)
     - Mock fetch to return mockResponse
     - Render <RejectionsView onFiberSelect={mockCallback} />
     - Open modal
     - Click the fiberId link in the modal
     - Expect: mockCallback called with 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
     - Expect: modal closes after callback fires
+    
+    **Implementation note:** If RejectionsView.tsx does not currently accept an
+    `onFiberSelect` prop, this test requires adding the prop to the component interface:
+    
+    ```tsx
+    interface RejectionsViewProps {
+      onFiberSelect?: (fiberId: string) => void;
+    }
+    ```
+    
+    Add this prop as part of implementing the test. If the prop is omitted,
+    the fiberId link should still be rendered but clicking it does nothing.
 ```
 
 ### Group 5: Pagination (3 tests)
 
 ```
-13. Next button advances offset by 20 and triggers re-fetch
+15. Next button advances offset by 20 and triggers re-fetch
     - Mock fetch to return { rejections: [...20 items], total: 45, hasMore: true }
     - Render <RejectionsView />
     - Expect: "Next →" button enabled
     - Click "Next →"
     - Expect: second fetch called with offset=20 in URL
 
-14. Previous button disabled at offset=0; enabled after advancing
+16. Previous button disabled at offset=0; enabled after advancing
     - Initial render: Expect "← Previous" button disabled (offset === 0)
     - Click "Next →" (advance to offset=20)
     - Expect "← Previous" button enabled
     - Click "← Previous"
     - Expect: fetch called with offset=0
 
-15. Pagination shows correct count text
+17. Pagination shows correct count text
     - Mock fetch: total=45, hasMore=true, 20 rejections returned, offset=0
     - Expect: "Showing 1-20 of 45" visible
     - After clicking Next (offset=20): "Showing 21-40 of 45" visible
@@ -232,7 +266,7 @@ const emptyResponse: RejectionsResponse = {
 ### Bonus: Nav Integration (1 test — in Nav.test.tsx or App.test.tsx)
 
 ```
-16. Nav renders a Rejections link/button that triggers view change
+18. Nav renders a Rejections link/button that triggers view change
     - Render <Nav setView={mockSetView} />
     - Find element containing text "Rejections" or aria-label containing "rejections"
     - Click it
@@ -243,7 +277,7 @@ const emptyResponse: RejectionsResponse = {
 
 ## Mock Setup
 
-Use `vi.fn()` on global `fetch` OR use MSW (if already configured in `src/test/mocks.tsx`). If using fetch mock:
+Use `vi.spyOn(global, 'fetch')` — no MSW currently configured in this project.
 
 ```typescript
 import { vi, beforeEach, afterEach } from 'vitest';
@@ -251,6 +285,7 @@ import { vi, beforeEach, afterEach } from 'vitest';
 beforeEach(() => {
   vi.spyOn(global, 'fetch').mockResolvedValue({
     ok: true,
+    status: 200,  // Include status for components that check response.status
     json: async () => mockResponse,
   } as Response);
 });
@@ -265,16 +300,26 @@ For the error state test:
 vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
 ```
 
+For loading state test (never-resolving):
+```typescript
+vi.useFakeTimers();
+vi.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => {}));
+// Render immediately checks loading state — no need to advance timers
+// Clean up: vi.useRealTimers() in afterEach
+```
+
 ---
 
 ## Implementation Order
 
-1. **Branch:** `test/rejection-visibility-explorer` from `develop` (or extend existing rejection test branch)
-2. **Write failing tests:** All 16 tests MUST fail first before any implementation changes
-3. **Fix Nav if needed:** If test 16 fails because no nav button exists, add the button (1-line change)
-4. **Commit tests:** All 16 tests passing
-5. **PR:** Target `develop`, reviewer `@scasplte2`
-6. **Reference PR #119** in PR description as the companion backend E2E
+1. **Branch:** `test/rejection-visibility-explorer` (this branch)
+2. **Write failing tests:** All 18 tests MUST fail first before any implementation changes
+3. **Add data-testid attributes:** If error badges lack test IDs, add `data-testid="error-badge-{severity}"` to RejectionsView.tsx
+4. **Add onFiberSelect prop:** If test 14 requires it, add the optional prop to the component interface
+5. **Fix Nav if needed:** If test 18 fails because no nav button exists, add the button (1-line change)
+6. **Commit tests:** All 18 tests passing
+7. **PR:** Target `develop`, reviewer `@scasplte2`
+8. **Reference PR #119** in PR description as the companion backend E2E
 
 ---
 
