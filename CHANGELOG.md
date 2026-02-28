@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.5.1...v0.5.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* update pnpm lockfile for Docker build ([#70](https://github.com/ottobot-ai/ottochain-explorer/issues/70)) ([a95cca8](https://github.com/ottobot-ai/ottochain-explorer/commit/a95cca8c6c063f3f2252fd8b43ac368085df915a))
+
 ## [0.5.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.5.0...v0.5.1) (2026-02-28)
 
 
