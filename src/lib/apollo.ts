@@ -46,4 +46,12 @@ if (typeof window !== "undefined") {
 export const apolloClient = new ApolloClient({
   link: finalLink,
   cache: new InMemoryCache(),
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: 'cache-and-network',
+    },
+    query: {
+      fetchPolicy: 'network-only',
+    },
+  },
 });
