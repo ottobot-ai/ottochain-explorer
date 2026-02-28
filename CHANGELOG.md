@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.5.0...v0.5.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* use network-first fetch policy for Apollo queries ([#68](https://github.com/ottobot-ai/ottochain-explorer/issues/68)) ([064328e](https://github.com/ottobot-ai/ottochain-explorer/commit/064328e0490c347bf0f033f0d23e2cd57f92f652))
+
 ## [0.5.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.4.1...v0.5.0) (2026-02-23)
 
 
