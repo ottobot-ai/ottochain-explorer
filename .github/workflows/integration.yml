@@ -277,19 +277,33 @@ jobs:
           echo "All GraphQL integration tests passed! ✅"
 
       - name: Collect logs on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           echo "=== Versions ==="
           echo "OttoChain: ${{ steps.versions.outputs.ottochain_version }}"
           echo "Tessellation: ${{ steps.versions.outputs.tessellation_version }}"
           echo "=== Container list ==="
           docker ps -a || true
-          echo "=== GL0 Logs ==="
+          echo "=== GL0 Logs (tail 50) ==="
           docker logs gl0-0 2>&1 | tail -50 || true
-          echo "=== ML0 Logs ==="
+          echo "=== ML0 Logs (tail 50) ==="
           docker logs ml0-0 2>&1 | tail -50 || true
-          echo "=== DL1 Logs ==="
+          echo "=== DL1 Logs (tail 50) ==="
           docker logs dl1-0 2>&1 | tail -50 || true
+
+          # Save full logs as files for artifact upload
+          mkdir -p /tmp/ci-logs
+          for container in gl0-0 ml0-0 dl1-0; do
+            docker logs "$container" 2>&1 > /tmp/ci-logs/${container}.log || true
+          done
+
+      - name: Upload node logs
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-logs-${{ github.run_number }}
+          path: /tmp/ci-logs/
+          retention-days: 14
 
       - name: Cleanup
         if: always()
