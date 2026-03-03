@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider } from '@apollo/client/testing';
+import type { MockedResponse } from '@apollo/client/testing';
 import { gql } from '@apollo/client/core';
 import { ContractsView } from './ContractsView';
+import type { ContractAttestation, ContractDispute } from '../lib/queries';
 
 // ─── GraphQL query shapes (must match ContractsView.tsx exactly) ────────────
 
@@ -117,8 +119,8 @@ const mockContractDetail = {
   acceptedAt: '2026-02-01T11:00:00Z',
   completedAt: null,
   rejectedAt: null,
-  attestations: [],
-  dispute: null,
+  attestations: [] as ContractAttestation[],
+  dispute: null as ContractDispute | null,
 };
 
 const mockContractWithAttestation = {
@@ -128,7 +130,7 @@ const mockContractWithAttestation = {
   attestations: [
     {
       id: 'att-1',
-      type: 'COMPLETION',
+      type: 'COMPLETION' as const,
       issuer: { address: 'DAGissuer999', displayName: 'Auditor' },
       delta: 10,
       reason: 'Delivered on time',
@@ -136,13 +138,13 @@ const mockContractWithAttestation = {
     },
     {
       id: 'att-2',
-      type: 'VOUCH',
+      type: 'VOUCH' as const,
       issuer: null,
       delta: 5,
       reason: null,
       createdAt: '2026-02-11T09:00:00Z',
     },
-  ],
+  ] as ContractAttestation[],
 };
 
 const mockContractWithDispute = {
@@ -152,13 +154,13 @@ const mockContractWithDispute = {
   state: 'DISPUTED',
   dispute: {
     id: 'disp-1',
-    status: 'OPEN',
+    status: 'OPEN' as const,
     initiator: { address: 'DAGproposer1234', displayName: 'AliceAgent' },
     reason: 'Service not delivered as agreed',
     resolution: null,
     createdAt: '2026-02-05T14:00:00Z',
     resolvedAt: null,
-  },
+  } as ContractDispute,
 };
 
 const mockContractWithResolution = {
@@ -168,13 +170,13 @@ const mockContractWithResolution = {
   state: 'DISPUTED',
   dispute: {
     id: 'disp-2',
-    status: 'RESOLVED',
+    status: 'RESOLVED' as const,
     initiator: { address: 'DAGproposer1234', displayName: 'AliceAgent' },
     reason: 'Partial delivery',
     resolution: 'Partial refund issued',
     createdAt: '2026-02-05T14:00:00Z',
     resolvedAt: '2026-02-08T16:00:00Z',
-  },
+  } as ContractDispute,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -197,7 +199,7 @@ const detailMock = (contract = mockContractDetail) => ({
 });
 
 function renderContracts(
-  mocks: object[],
+  mocks: MockedResponse[],
   props: { onAgentClick?: (addr: string) => void } = {}
 ) {
   const onAgentClick = props.onAgentClick ?? vi.fn();
