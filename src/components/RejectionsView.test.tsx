@@ -214,7 +214,7 @@ describe('RejectionsView — Filters', () => {
     await userEvent.selectOptions(select, 'TransitionStateMachine');
 
     await waitFor(() => {
-      const urls: string[] = mockFetch.mock.calls.map((c: [string, ...unknown[]]) => c[0]);
+      const urls: string[] = mockFetch.mock.calls.map((c: unknown[]) => c[0] as string);
       expect(urls.some(u => u.includes('updateType=TransitionStateMachine'))).toBe(true);
     });
   });
@@ -231,7 +231,7 @@ describe('RejectionsView — Filters', () => {
     await userEvent.type(input, 'test-fiber-id');
 
     await waitFor(() => {
-      const urls: string[] = mockFetch.mock.calls.map((c: [string, ...unknown[]]) => c[0]);
+      const urls: string[] = mockFetch.mock.calls.map((c: unknown[]) => c[0] as string);
       expect(urls.some(u => u.includes('fiberId=test-fiber-id'))).toBe(true);
     });
   });
@@ -301,7 +301,7 @@ describe('RejectionsView — Pagination', () => {
     await userEvent.click(nextBtn);
 
     await waitFor(() => {
-      const urls: string[] = mockFetch.mock.calls.map((c: [string, ...unknown[]]) => c[0]);
+      const urls: string[] = mockFetch.mock.calls.map((c: unknown[]) => c[0] as string);
       expect(urls.some(u => u.includes('offset=20'))).toBe(true);
     });
   });
