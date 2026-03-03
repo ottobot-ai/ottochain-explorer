@@ -288,17 +288,11 @@ describe('ContractsView', () => {
     const user = userEvent.setup();
     renderContracts([listMock(), proposedListMock]);
 
-    // Find the exact filter pill button (text is exactly "PROPOSED", not a badge inside a row)
+    // Use data-testid for reliable selection
     await waitFor(() => {
-      const filterBtn = screen.getAllByRole('button').find(
-        (b) => b.textContent?.trim() === 'PROPOSED' && b.className.includes('rounded-full')
-      );
-      expect(filterBtn).toBeDefined();
+      expect(screen.getByTestId('filter-proposed')).toBeInTheDocument();
     });
-    const filterBtn = screen.getAllByRole('button').find(
-      (b) => b.textContent?.trim() === 'PROPOSED' && b.className.includes('rounded-full')
-    )!;
-    await user.click(filterBtn);
+    await user.click(screen.getByTestId('filter-proposed'));
 
     await waitFor(() => {
       expect(screen.queryByText('AliceAgent')).not.toBeInTheDocument();
@@ -314,19 +308,14 @@ describe('ContractsView', () => {
     const user = userEvent.setup();
     renderContracts([listMock(), proposedListMock, listMock()]);
 
+    // Use data-testid for reliable selection
     await waitFor(() => {
-      const filterBtn = screen.getAllByRole('button').find(
-        (b) => b.textContent?.trim() === 'PROPOSED' && b.className.includes('rounded-full')
-      );
-      expect(filterBtn).toBeDefined();
+      expect(screen.getByTestId('filter-proposed')).toBeInTheDocument();
     });
-    const filterBtn = screen.getAllByRole('button').find(
-      (b) => b.textContent?.trim() === 'PROPOSED' && b.className.includes('rounded-full')
-    )!;
-    await user.click(filterBtn);
+    await user.click(screen.getByTestId('filter-proposed'));
 
-    await waitFor(() => screen.getByRole('button', { name: /All/i }));
-    await user.click(screen.getByRole('button', { name: /All/i }));
+    await waitFor(() => expect(screen.getByTestId('filter-all')).toBeInTheDocument());
+    await user.click(screen.getByTestId('filter-all'));
 
     await waitFor(() => {
       expect(screen.getByText('AliceAgent')).toBeInTheDocument();
@@ -486,20 +475,13 @@ describe('ContractsView', () => {
   // ── Attestations ──────────────────────────────────────────────────────────
 
   /**
-   * Click the first (and only) contract row in the list.
-   * We identify it by the row-button class pattern since CopyAddress truncates IDs.
+   * Click a contract row by its contractId using data-testid.
    */
-  async function clickFirstListRow(user: ReturnType<typeof userEvent.setup>) {
+  async function clickContractRow(user: ReturnType<typeof userEvent.setup>, contractId: string) {
     await waitFor(() => {
-      const rowBtn = screen.getAllByRole('button').find(
-        (b) => b.className.includes('w-full') && b.className.includes('text-left') && b.className.includes('p-3')
-      );
-      expect(rowBtn).toBeDefined();
+      expect(screen.getByTestId(`contract-row-${contractId}`)).toBeInTheDocument();
     });
-    const rowBtn = screen.getAllByRole('button').find(
-      (b) => b.className.includes('w-full') && b.className.includes('text-left') && b.className.includes('p-3')
-    )!;
-    await user.click(rowBtn);
+    await user.click(screen.getByTestId(`contract-row-${contractId}`));
   }
 
   it('renders attestation section when attestations exist', async () => {
@@ -515,7 +497,7 @@ describe('ContractsView', () => {
       </MockedProvider>
     );
 
-    await clickFirstListRow(user);
+    await clickContractRow(user, 'contract-att-001');
 
     await waitFor(() => {
       expect(screen.getByText(/Attestations/i)).toBeInTheDocument();
@@ -535,7 +517,7 @@ describe('ContractsView', () => {
       </MockedProvider>
     );
 
-    await clickFirstListRow(user);
+    await clickContractRow(user, 'contract-att-001');
 
     await waitFor(() => {
       expect(screen.getByText('COMPLETION')).toBeInTheDocument();
@@ -555,7 +537,7 @@ describe('ContractsView', () => {
       </MockedProvider>
     );
 
-    await clickFirstListRow(user);
+    await clickContractRow(user, 'contract-att-001');
 
     await waitFor(() => {
       expect(screen.getByText('+10 rep')).toBeInTheDocument();
@@ -577,7 +559,7 @@ describe('ContractsView', () => {
       </MockedProvider>
     );
 
-    await clickFirstListRow(user);
+    await clickContractRow(user, 'contract-disp-001');
 
     await waitFor(() => {
       // "⚠️ Dispute" heading in detail panel
@@ -598,7 +580,7 @@ describe('ContractsView', () => {
       </MockedProvider>
     );
 
-    await clickFirstListRow(user);
+    await clickContractRow(user, 'contract-disp-001');
 
     await waitFor(() => {
       expect(screen.getByText(/Service not delivered as agreed/i)).toBeInTheDocument();
@@ -618,7 +600,7 @@ describe('ContractsView', () => {
       </MockedProvider>
     );
 
-    await clickFirstListRow(user);
+    await clickContractRow(user, 'contract-res-001');
 
     await waitFor(() => {
       expect(screen.getByText(/Partial refund issued/i)).toBeInTheDocument();
@@ -641,6 +623,95 @@ describe('ContractsView', () => {
       const completedBadges = screen.getAllByText(/COMPLETED/i);
       // COMPLETED appears as filter button + badge in list
       expect(completedBadges.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // ── GraphQL Error States ──────────────────────────────────────────────────
+
+  it('handles list query error gracefully', async () => {
+    const errorMock = {
+      request: {
+        query: CONTRACTS_LIST_QUERY,
+        variables: { limit: 50, state: null },
+      },
+      error: new Error('Network error'),
+    };
+    const { container } = renderContracts([errorMock]);
+    
+    // When query errors, loading should stop (no more skeleton pulses)
+    // and component should still render without crashing
+    await waitFor(() => {
+      expect(container).toBeInTheDocument();
+    });
+    
+    // After error, the loading skeletons should be gone
+    await waitFor(() => {
+      const skeletons = container.querySelectorAll('.animate-pulse');
+      expect(skeletons.length).toBe(0);
+    }, { timeout: 3000 });
+  });
+
+  it('shows error message when detail query fails', async () => {
+    const errorDetailMock = {
+      request: {
+        query: CONTRACT_DETAILS_QUERY,
+        variables: { contractId: 'contract-001' },
+      },
+      error: new Error('Network error'),
+    };
+    const user = userEvent.setup();
+    renderContracts([listMock(), errorDetailMock]);
+
+    await waitFor(() => screen.getByText('AliceAgent'));
+    await user.click(screen.getByTestId('contract-row-contract-001'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Contract not found/i)).toBeInTheDocument();
+    });
+  });
+
+  // ── Null Issuer Attestation ───────────────────────────────────────────────
+
+  it('shows "System attestation" when attestation issuer is null', async () => {
+    const attListMock = listMock([
+      makeContract({ contractId: 'contract-att-001', state: 'COMPLETED' }),
+    ]);
+    const attDetailMock = detailMock(mockContractWithAttestation);
+    const user = userEvent.setup();
+
+    render(
+      <MockedProvider mocks={[attListMock, attDetailMock]} addTypename={false}>
+        <ContractsView onAgentClick={vi.fn()} />
+      </MockedProvider>
+    );
+
+    await clickContractRow(user, 'contract-att-001');
+
+    await waitFor(() => {
+      // The second attestation (att-2) has issuer: null
+      expect(screen.getByText('System attestation')).toBeInTheDocument();
+    });
+  });
+
+  it('renders attestation with null issuer using data-testid', async () => {
+    const attListMock = listMock([
+      makeContract({ contractId: 'contract-att-001', state: 'COMPLETED' }),
+    ]);
+    const attDetailMock = detailMock(mockContractWithAttestation);
+    const user = userEvent.setup();
+
+    render(
+      <MockedProvider mocks={[attListMock, attDetailMock]} addTypename={false}>
+        <ContractsView onAgentClick={vi.fn()} />
+      </MockedProvider>
+    );
+
+    await clickContractRow(user, 'contract-att-001');
+
+    await waitFor(() => {
+      // Check the attestation with null issuer exists via data-testid
+      const nullIssuerElement = screen.getByTestId('attestation-issuer-att-2');
+      expect(nullIssuerElement).toHaveTextContent('System attestation');
     });
   });
 });

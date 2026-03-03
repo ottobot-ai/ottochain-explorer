@@ -66,9 +66,10 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
         </div>
         
         {/* State Filter */}
-        <div className="flex flex-wrap gap-2 mb-4 flex-shrink-0">
+        <div className="flex flex-wrap gap-2 mb-4 flex-shrink-0" data-testid="state-filter">
           <button
             onClick={() => setStateFilter(null)}
+            data-testid="filter-all"
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
               stateFilter === null 
                 ? 'bg-[var(--accent)] text-white' 
@@ -81,6 +82,7 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
             <button
               key={state}
               onClick={() => setStateFilter(state)}
+              data-testid={`filter-${state.toLowerCase()}`}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 stateFilter === state 
                   ? 'bg-[var(--accent)] text-white' 
@@ -105,6 +107,7 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
               <button
                 key={contract.contractId}
                 onClick={() => setSelectedContract(contract.contractId)}
+                data-testid={`contract-row-${contract.contractId}`}
                 className={`w-full text-left p-3 rounded-lg transition-all ${
                   selectedContract === contract.contractId
                     ? 'bg-[var(--accent)] bg-opacity-20 border border-[var(--accent)]'
@@ -163,6 +166,7 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
               <div 
                 className="p-4 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] cursor-pointer hover:border-[var(--accent)] transition-colors"
                 onClick={() => onAgentClick(detailData.contract!.proposer.address)}
+                data-testid="proposer-card"
               >
                 <div className="text-xs text-[var(--text-muted)] mb-1">PROPOSER</div>
                 <div className="font-medium text-[var(--accent)]">
@@ -175,6 +179,7 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
               <div 
                 className="p-4 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] cursor-pointer hover:border-[var(--accent-2)] transition-colors"
                 onClick={() => onAgentClick(detailData.contract!.counterparty.address)}
+                data-testid="counterparty-card"
               >
                 <div className="text-xs text-[var(--text-muted)] mb-1">COUNTERPARTY</div>
                 <div className="font-medium text-[var(--accent-2)]">
@@ -237,6 +242,7 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
                   {detailData.contract.attestations.map((attestation) => (
                     <div 
                       key={attestation.id}
+                      data-testid={`attestation-${attestation.id}`}
                       className="p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)]"
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -257,16 +263,20 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
                           {new Date(attestation.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      {attestation.issuer && (
-                        <div className="text-sm text-[var(--text-muted)]">
-                          By: <button 
-                            onClick={() => onAgentClick(attestation.issuer!.address)}
-                            className="text-[var(--accent)] hover:underline"
-                          >
-                            {attestation.issuer.displayName || attestation.issuer.address.slice(0, 12) + '...'}
-                          </button>
-                        </div>
-                      )}
+                      <div className="text-sm text-[var(--text-muted)]" data-testid={`attestation-issuer-${attestation.id}`}>
+                        {attestation.issuer ? (
+                          <>
+                            By: <button 
+                              onClick={() => onAgentClick(attestation.issuer!.address)}
+                              className="text-[var(--accent)] hover:underline"
+                            >
+                              {attestation.issuer.displayName || attestation.issuer.address.slice(0, 12) + '...'}
+                            </button>
+                          </>
+                        ) : (
+                          <span className="italic">System attestation</span>
+                        )}
+                      </div>
                       {attestation.reason && (
                         <div className="text-sm text-[var(--text-muted)] mt-1 italic">
                           "{attestation.reason}"
