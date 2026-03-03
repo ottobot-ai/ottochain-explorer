@@ -37,6 +37,7 @@ export const mockNetworkStats = {
   totalContracts: 89,
   completedContracts: 67,
   lastSnapshotOrdinal: 45678,
+  totalAttestations: 523,
 };
 
 export const mockStatsTrends = {
