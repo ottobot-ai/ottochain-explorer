@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { gql } from '@apollo/client/core';
 import { DAOsView } from './DAOsView';
 
@@ -103,7 +103,7 @@ function previewMock(daoId = 'dao-001') {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function renderDAOs(mocks = [daosMock()]) {
+function renderDAOs(mocks: MockedResponse[] = [daosMock()]) {
   return render(
     <MockedProvider mocks={mocks} addTypename={false}>
       <DAOsView />
