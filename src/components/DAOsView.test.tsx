@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MockedProvider, MockedResponse } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing';
+import type { MockedResponse } from '@apollo/client/testing';
 import { gql } from '@apollo/client/core';
 import { DAOsView } from './DAOsView';
 
