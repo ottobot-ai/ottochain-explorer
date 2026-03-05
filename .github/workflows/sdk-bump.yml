@@ -46,13 +46,19 @@ jobs:
       - name: Update SDK version
         run: |
           VERSION="${{ steps.params.outputs.version }}"
+          found=0
           for field in dependencies devDependencies; do
             if jq -e ".$field[\"@ottochain/sdk\"]" package.json > /dev/null 2>&1; then
               tmpfile=$(mktemp)
-              jq ".$field[\"@ottochain/sdk\"] = \"$VERSION\"" package.json > "$tmpfile" && mv "$tmpfile" package.json
+              jq --arg v "$VERSION" ".${field}[\"@ottochain/sdk\"] = \$v" package.json > "$tmpfile" && mv "$tmpfile" package.json
               echo "Updated $field to $VERSION"
+              found=1
             fi
           done
+          if [ "$found" -eq 0 ]; then
+            echo "Error: @ottochain/sdk not found in dependencies or devDependencies — aborting"
+            exit 1
+          fi
 
       - name: Update lockfile
         run: npm install --package-lock-only
@@ -71,7 +77,7 @@ jobs:
 
             ---
             *Triggered by: ${{ github.event_name }}*
-          branch: bump/sdk
+          branch: bump/sdk-${{ steps.params.outputs.version }}
           delete-branch: true
           labels: |
             dependencies
