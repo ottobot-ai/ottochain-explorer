@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Determine version
         id: params
@@ -31,11 +31,15 @@ jobs:
             VERSION="${{ inputs.version }}"
           fi
           VERSION="${VERSION#v}"
+          if [ -z "$VERSION" ]; then
+            echo "Error: VERSION is empty — cannot bump SDK"
+            exit 1
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Bumping @ottochain/sdk to $VERSION"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
 
@@ -64,7 +68,7 @@ jobs:
             Automated SDK version bump triggered by `@ottochain/sdk` release.
 
             ## Changes
-            - `@ottochain/sdk` → `^v${{ steps.params.outputs.version }}`
+            - `@ottochain/sdk` → `^${{ steps.params.outputs.version }}`
 
             ---
             *Triggered by: ${{ github.event_name }}*
