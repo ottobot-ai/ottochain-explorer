@@ -46,14 +46,13 @@ jobs:
       - name: Update SDK version
         run: |
           VERSION="${{ steps.params.outputs.version }}"
-          if jq -e '.dependencies["@ottochain/sdk"]' package.json > /dev/null 2>&1; then
-            jq ".dependencies[\"@ottochain/sdk\"] = \"^$VERSION\"" package.json > tmp.json && mv tmp.json package.json
-            echo "Updated dependencies to ^$VERSION"
-          fi
-          if jq -e '.devDependencies["@ottochain/sdk"]' package.json > /dev/null 2>&1; then
-            jq ".devDependencies[\"@ottochain/sdk\"] = \"^$VERSION\"" package.json > tmp.json && mv tmp.json package.json
-            echo "Updated devDependencies to ^$VERSION"
-          fi
+          for field in dependencies devDependencies; do
+            if jq -e ".$field[\"@ottochain/sdk\"]" package.json > /dev/null 2>&1; then
+              tmpfile=$(mktemp)
+              jq ".$field[\"@ottochain/sdk\"] = \"$VERSION\"" package.json > "$tmpfile" && mv "$tmpfile" package.json
+              echo "Updated $field to $VERSION"
+            fi
+          done
 
       - name: Update lockfile
         run: npm install --package-lock-only
@@ -68,7 +67,7 @@ jobs:
             Automated SDK version bump triggered by `@ottochain/sdk` release.
 
             ## Changes
-            - `@ottochain/sdk` → `^${{ steps.params.outputs.version }}`
+            - `@ottochain/sdk` → `${{ steps.params.outputs.version }}`
 
             ---
             *Triggered by: ${{ github.event_name }}*
