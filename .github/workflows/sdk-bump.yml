@@ -1,0 +1,75 @@
+name: SDK Version Bump
+
+on:
+  repository_dispatch:
+    types: [sdk-bump]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SDK version (without v prefix, e.g., 1.3.0)'
+        required: true
+        type: string
+
+jobs:
+  bump:
+    name: Bump @ottochain/sdk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Determine version
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            VERSION="${{ github.event.client_payload.version }}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Bumping @ottochain/sdk to $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Update SDK version
+        run: |
+          VERSION="${{ steps.params.outputs.version }}"
+          if jq -e '.dependencies["@ottochain/sdk"]' package.json > /dev/null 2>&1; then
+            jq ".dependencies[\"@ottochain/sdk\"] = \"^$VERSION\"" package.json > tmp.json && mv tmp.json package.json
+            echo "Updated dependencies to ^$VERSION"
+          fi
+          if jq -e '.devDependencies["@ottochain/sdk"]' package.json > /dev/null 2>&1; then
+            jq ".devDependencies[\"@ottochain/sdk\"] = \"^$VERSION\"" package.json > tmp.json && mv tmp.json package.json
+            echo "Updated devDependencies to ^$VERSION"
+          fi
+
+      - name: Update lockfile
+        run: npm install --package-lock-only
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): bump @ottochain/sdk to v${{ steps.params.outputs.version }}"
+          title: "chore(deps): bump @ottochain/sdk to v${{ steps.params.outputs.version }}"
+          body: |
+            Automated SDK version bump triggered by `@ottochain/sdk` release.
+
+            ## Changes
+            - `@ottochain/sdk` → `^v${{ steps.params.outputs.version }}`
+
+            ---
+            *Triggered by: ${{ github.event_name }}*
+          branch: bump/sdk
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
