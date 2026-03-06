@@ -201,7 +201,7 @@ function App() {
     <div className="min-h-screen pb-16">
       <Nav view={view} setView={handleViewChange} onAgentSelect={handleAgentClick} onFiberSelect={handleFiberSelect} onDAOSelect={handleDAOSelect} />
       
-      <main className="container mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16">
+      <main className="container mx-auto px-3 sm:px-6 pt-16 sm:pt-24 pb-12 sm:pb-16">
         {/* Live indicator with controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-2">

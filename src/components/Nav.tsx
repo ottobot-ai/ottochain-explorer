@@ -66,7 +66,7 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
         
         {/* Mobile hamburger */}
         <button 
-          className="lg:hidden p-2"
+          className="lg:hidden p-2 z-50"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
@@ -190,7 +190,7 @@ export function Nav({ view, setView, onAgentSelect, onFiberSelect, onDAOSelect: 
 
         {/* Mobile menu overlay */}
         {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 top-14 bg-[var(--bg)] z-40 p-4 overflow-y-auto">
+          <div className="lg:hidden fixed inset-0 top-[57px] bg-[var(--bg)] z-40 p-4 overflow-y-auto" style={{ minHeight: 'calc(100vh - 57px)' }}>
             {/* Search at top of mobile menu */}
             <div className="mb-4">
               <GlobalSearch
