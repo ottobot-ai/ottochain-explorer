@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.5.2...v0.6.0) (2026-03-03)
+
+
+### Features
+
+* **tests:** Add component tests for core pages + Codecov integration ([#81](https://github.com/ottobot-ai/ottochain-explorer/issues/81)) ([67e953e](https://github.com/ottobot-ai/ottochain-explorer/commit/67e953e78ff6b81f0b0b1c99c49060c5b1cbc5b0))
+
+
+### Bug Fixes
+
+* **ci:** trigger CI on develop-targeting PRs ([#72](https://github.com/ottobot-ai/ottochain-explorer/issues/72)) ([ca94d67](https://github.com/ottobot-ai/ottochain-explorer/commit/ca94d677b5ae4aa2d1e9b3c30cee992b4d1f8273))
+
 ## [0.5.2](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.5.1...v0.5.2) (2026-02-28)
 
 

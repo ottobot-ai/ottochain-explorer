@@ -160,10 +160,10 @@ jobs:
 
       # Build explorer
       - name: Install explorer dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build explorer
-        run: npm run build
+        run: pnpm run build
 
       # Build services
       - name: Install services dependencies
