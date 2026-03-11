@@ -217,6 +217,7 @@ jobs:
             if [ $i -eq 180 ]; then echo "DL1 timeout"; exit 1; fi
           done
 
+
       - name: Start gateway
         working-directory: services
         env:
@@ -237,8 +238,11 @@ jobs:
           DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
           METAGRAPH_ML0_URL: http://localhost:9200
           METAGRAPH_DL1_URL: http://localhost:9400
+          GL0_URL: http://localhost:9000
           INDEXER_PORT: 3031
         run: |
+          export METAGRAPH_ID=$(curl -sf http://localhost:9200/node/info | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          echo "METAGRAPH_ID=${METAGRAPH_ID}"
           node packages/indexer/dist/index.js &
           sleep 3
           curl -s http://localhost:3031/health | grep -q '"status":"ok"'
