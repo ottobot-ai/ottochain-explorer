@@ -3,6 +3,7 @@ import { exportToCSV, exportToJSON } from '../lib/export';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
+import { Pagination, usePagination } from './Pagination';
 import { FiberStateViewer } from './FiberStateViewer';
 
 const WORKFLOW_TYPES_QUERY = gql`
@@ -197,6 +198,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
 
   const workflowTypes: WorkflowType[] = typesData?.workflowTypes || [];
   const fibers: Fiber[] = filteredFibers;
+  const { page: fiberPage, setPage: setFiberPage, totalPages: fiberTotalPages, pagedItems: pagedFibers, totalItems: fiberTotalItems, pageSize: fiberPageSize } = usePagination(fibers, 10);
   const detail: Fiber | null = fiberDetail?.fiber || null;
 
   const totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
@@ -205,25 +207,25 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex-shrink-0">
             <h1 className="text-2xl font-bold text-[var(--text-primary)]">Workflow Fibers</h1>
-            <p className="text-[var(--text-muted)] mt-1">
+            <p className="text-[var(--text-muted)] mt-1 text-sm">
               Browse all state machines on-chain — {totalFibers} total fibers
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="text"
               value={ownerFilter}
               onChange={(e) => setOwnerFilter(e.target.value)}
               placeholder="Filter by owner (DAG...)"
-              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-48 placeholder:text-[var(--text-muted)]"
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm w-full sm:w-48 placeholder:text-[var(--text-muted)]"
             />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
+              className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm flex-1 sm:flex-none"
             >
               <option value="">All Status</option>
               <option value="ACTIVE">Active</option>
@@ -322,16 +324,16 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
       </div>
 
       {/* Main Content: Fiber List + Detail */}
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Fiber List */}
-        <div className="flex-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="flex-1 min-w-0 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">
               {selectedType || 'All'} Fibers
             </h2>
           </div>
           
-          <div className="divide-y divide-[var(--border)] max-h-[600px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border)]">
             {fibersLoading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full mx-auto" />
@@ -341,7 +343,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                 No fibers found
               </div>
             ) : (
-              fibers.map((fiber) => (
+              pagedFibers.map((fiber) => (
                 <button
                   key={fiber.fiberId}
                   onClick={() => setSelectedFiber(fiber.fiberId)}
@@ -376,10 +378,11 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
               ))
             )}
           </div>
+          <Pagination page={fiberPage} totalPages={fiberTotalPages} onPageChange={setFiberPage} totalItems={fiberTotalItems} pageSize={fiberPageSize} />
         </div>
 
         {/* Fiber Detail Panel */}
-        <div className="w-[500px] min-w-[400px] bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="w-full lg:w-[500px] lg:min-w-[400px] bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">Fiber Details</h2>
           </div>

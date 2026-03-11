@@ -3,6 +3,7 @@ import { exportToCSV, exportToJSON } from '../lib/export';
 import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { AgentAvatar } from './AgentAvatar';
+import { Pagination, usePagination } from './Pagination';
 import type { AgentState, FiberStatus } from '../lib/queries';
 
 const AGENTS_QUERY = gql`
@@ -128,6 +129,7 @@ export function IdentityView({ onFiberClick }: IdentityViewProps) {
   const agents: Agent[] = agentsData?.agents || [];
   const agentFibers: Fiber[] = fibersData?.fibersByOwner || [];
   const selectedAgentData = agents.find(a => a.address === selectedAgent);
+  const { page: agentPage, setPage: setAgentPage, totalPages: agentTotalPages, pagedItems: pagedAgents, totalItems: agentTotalItems, pageSize: agentPageSize } = usePagination(agents, 10);
 
   // Stats
   const totalAgents = agents.length;
@@ -138,18 +140,18 @@ export function IdentityView({ onFiberClick }: IdentityViewProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">🆔 Agent Identity</h1>
-          <p className="text-[var(--text-muted)] mt-1">
+          <p className="text-[var(--text-muted)] mt-1 text-sm">
             Decentralized reputation and identity on OttoChain
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
+            className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm flex-1 sm:flex-none"
           >
             <option value="REPUTATION_DESC">Highest Reputation</option>
             <option value="REPUTATION_ASC">Lowest Reputation</option>
@@ -189,14 +191,14 @@ export function IdentityView({ onFiberClick }: IdentityViewProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Agent List */}
-        <div className="flex-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="flex-1 min-w-0 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">Agent Leaderboard</h2>
           </div>
           
-          <div className="divide-y divide-[var(--border)] max-h-[600px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border)]">
             {agentsLoading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full mx-auto" />
@@ -206,7 +208,7 @@ export function IdentityView({ onFiberClick }: IdentityViewProps) {
                 No agents registered yet
               </div>
             ) : (
-              agents.map((agent, index) => (
+              pagedAgents.map((agent, index) => (
                 <button
                   key={agent.address}
                   onClick={() => setSelectedAgent(agent.address)}
@@ -216,14 +218,16 @@ export function IdentityView({ onFiberClick }: IdentityViewProps) {
                 >
                   <div className="flex items-center gap-4">
                     {/* Rank */}
+                    {(() => { const rank = (agentPage - 1) * agentPageSize + index; return (
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
-                      index === 1 ? 'bg-gray-400/20 text-gray-400' :
-                      index === 2 ? 'bg-orange-500/20 text-orange-400' :
+                      rank === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                      rank === 1 ? 'bg-gray-400/20 text-gray-400' :
+                      rank === 2 ? 'bg-orange-500/20 text-orange-400' :
                       'bg-[var(--bg-elevated)] text-[var(--text-muted)]'
                     }`}>
-                      {index + 1}
+                      {rank + 1}
                     </div>
+                    ); })()}
                     
                     {/* Avatar */}
                     <AgentAvatar address={agent.address} size={40} />
@@ -265,10 +269,11 @@ export function IdentityView({ onFiberClick }: IdentityViewProps) {
               ))
             )}
           </div>
+          <Pagination page={agentPage} totalPages={agentTotalPages} onPageChange={setAgentPage} totalItems={agentTotalItems} pageSize={agentPageSize} />
         </div>
 
         {/* Agent Detail Panel */}
-        <div className="w-96 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="w-full lg:w-96 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">Agent Profile</h2>
           </div>

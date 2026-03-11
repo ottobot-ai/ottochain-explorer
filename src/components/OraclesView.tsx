@@ -4,6 +4,7 @@ import { gql } from '@apollo/client/core';
 import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { FiberStateViewer } from './FiberStateViewer';
+import { Pagination, usePagination } from './Pagination';
 import { 
   getOracleDefinition
 } from '@ottochain/sdk/apps/oracles';
@@ -226,6 +227,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
 
   const workflowTypes: WorkflowType[] = typesData?.workflowTypes || [];
   const oracles: Fiber[] = filteredOracles;
+  const { page: oraclePage, setPage: setOraclePage, totalPages: oracleTotalPages, pagedItems: pagedOracles, totalItems: oracleTotalItems, pageSize: oraclePageSize } = usePagination(oracles, 10);
   const detail: Fiber | null = oracleDetail?.fiber || null;
 
   const totalFibers = workflowTypes.reduce((sum, t) => sum + t.count, 0);
@@ -372,16 +374,16 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
       </div>
 
       {/* Main Content: Oracle List + Detail */}
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Oracle List */}
-        <div className="flex-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="flex-1 min-w-0 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">
               Registered Oracles ({oracles.length})
             </h2>
           </div>
           
-          <div className="divide-y divide-[var(--border)] max-h-[600px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border)]">
             {fibersLoading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full mx-auto" />
@@ -391,7 +393,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
                 No oracles found
               </div>
             ) : (
-              oracles.map((oracle) => {
+              pagedOracles.map((oracle) => {
                 const stateData = oracle.stateData as Record<string, unknown> | undefined;
                 const address = stateData?.address as string | undefined;
                 const stake = stateData?.stake as number | undefined;
@@ -467,10 +469,11 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
               })
             )}
           </div>
+          <Pagination page={oraclePage} totalPages={oracleTotalPages} onPageChange={setOraclePage} totalItems={oracleTotalItems} pageSize={oraclePageSize} />
         </div>
 
         {/* Oracle Detail Panel */}
-        <div className="w-[500px] min-w-[400px] bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="w-full lg:w-[500px] lg:min-w-[400px] bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="font-semibold text-[var(--text-primary)]">Oracle Details</h2>
           </div>
