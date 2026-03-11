@@ -74,7 +74,7 @@ describe('Nav — Rejections button', () => {
   it('renders a ⛔ Rejections button that switches view to "rejections"', async () => {
     const setView = vi.fn();
     render(
-      <MockedProvider mocks={[]} addTypename={false}>
+      <MockedProvider mocks={[]}>
         <Nav view="dashboard" setView={setView} />
       </MockedProvider>
     );
@@ -293,7 +293,7 @@ describe('RejectionsView — Pagination', () => {
 
     render(<RejectionsView />);
 
-    await waitFor(() => screen.getByText(/showing 1-20 of 25/i));
+    await waitFor(() => screen.getByText(/showing 1.20 of 25/i));
 
     const nextBtn = screen.getByRole('button', { name: /next/i });
     expect(nextBtn).not.toBeDisabled();
@@ -315,7 +315,7 @@ describe('RejectionsView — Pagination', () => {
 
     render(<RejectionsView />);
 
-    await waitFor(() => screen.getByText(/showing 1-20 of 25/i));
+    await waitFor(() => screen.getByText(/showing 1.20 of 25/i));
 
     const prevBtn = screen.getByRole('button', { name: /previous/i });
     expect(prevBtn).toBeDisabled();
