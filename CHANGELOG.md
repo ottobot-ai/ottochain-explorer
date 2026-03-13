@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.7.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.6.0...v0.7.0) (2026-03-13)
+
+
+### Features
+
+* add SDK version bump workflow ([#87](https://github.com/ottobot-ai/ottochain-explorer/issues/87)) ([80ea23f](https://github.com/ottobot-ai/ottochain-explorer/commit/80ea23f37371250265903339d89f34fdb87e2786))
+* **rejections:** add signer filter, date range, and URL state persistence ([#85](https://github.com/ottobot-ai/ottochain-explorer/issues/85)) ([c5eb9d9](https://github.com/ottobot-ai/ottochain-explorer/commit/c5eb9d98c9e84b0190e0abb8980ed6fa57af5e06))
+* RejectionsView component tests (no nav button) ([#82](https://github.com/ottobot-ai/ottochain-explorer/issues/82)) ([742fcad](https://github.com/ottobot-ai/ottochain-explorer/commit/742fcad938ceb4a1a2ab72da30027905f998cf64))
+* **tests:** ContractsView component tests — 28 tests ([#83](https://github.com/ottobot-ai/ottochain-explorer/issues/83)) ([1a236f4](https://github.com/ottobot-ai/ottochain-explorer/commit/1a236f423e1407e018bd1262673237ed9574d2ff))
+* **tests:** DAOsView component tests — 27 tests ([#84](https://github.com/ottobot-ai/ottochain-explorer/issues/84)) ([d141472](https://github.com/ottobot-ai/ottochain-explorer/commit/d141472dc873c376c67f687b44774016adaf9cc2))
+
+
+### Bug Fixes
+
+* **ci:** use OTTOBOT_PAT for SDK bump PRs ([#102](https://github.com/ottobot-ai/ottochain-explorer/issues/102)) ([3e59982](https://github.com/ottobot-ai/ottochain-explorer/commit/3e59982001583731aafa6eef6a7500351f4648ad))
+* mobile-responsive layout with paginated lists ([#91](https://github.com/ottobot-ai/ottochain-explorer/issues/91)) ([18bd255](https://github.com/ottobot-ai/ottochain-explorer/commit/18bd2553488dd9aac23bd5eaad564535d2457668))
+* update sdk-bump workflow to actions v6 ([#89](https://github.com/ottobot-ai/ottochain-explorer/issues/89)) ([92365dc](https://github.com/ottobot-ai/ottochain-explorer/commit/92365dcf73334fcd5885e219e1281f6abfbd3cde))
+* use pnpm in sdk-bump workflow, gitignore package-lock.json ([#103](https://github.com/ottobot-ai/ottochain-explorer/issues/103)) ([91f1203](https://github.com/ottobot-ai/ottochain-explorer/commit/91f1203ab2d0f153c427e7999bb4c9579e690d2e))
+
 ## [0.6.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.5.2...v0.6.0) (2026-03-03)
 
 
