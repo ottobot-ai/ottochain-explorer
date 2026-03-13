@@ -38,10 +38,16 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Bumping @ottochain/sdk to $VERSION"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '22'
+          cache: 'pnpm'
 
       - name: Update SDK version
         run: |
@@ -61,7 +67,7 @@ jobs:
           fi
 
       - name: Update lockfile
-        run: npm install --package-lock-only
+        run: pnpm install --no-frozen-lockfile
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
