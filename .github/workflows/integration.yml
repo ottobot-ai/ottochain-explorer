@@ -178,7 +178,7 @@ jobs:
         working-directory: services
         env:
           DATABASE_URL: postgresql://ottochain:ottochain@localhost:5432/ottochain_identity
-        run: pnpm db:push --skip-generate
+        run: pnpm db:push
 
       # ── Start metagraph cluster from pre-built JARs ───────────────────
       - name: Start metagraph cluster
