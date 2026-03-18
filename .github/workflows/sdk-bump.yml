@@ -72,7 +72,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.OTTOBOT_PAT }}
+          token: ${{ secrets.DEPLOY_REPO_TOKEN }}
           commit-message: "chore(deps): bump @ottochain/sdk to v${{ steps.params.outputs.version }}"
           title: "chore(deps): bump @ottochain/sdk to v${{ steps.params.outputs.version }}"
           body: |
