@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.7.0...v0.7.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* **ci:** remove --skip-generate (removed in Prisma v7) ([#109](https://github.com/ottobot-ai/ottochain-explorer/issues/109)) ([6356bc3](https://github.com/ottobot-ai/ottochain-explorer/commit/6356bc356203e70440eb253df5ec8c69ebe1d6dd))
+
 ## [0.7.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.6.0...v0.7.0) (2026-03-13)
 
 
