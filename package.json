@@ -16,7 +16,7 @@
     "@apollo/client": "^3.13.5",
     "@dicebear/collection": "^9.4.0",
     "@dicebear/core": "^9.4.0",
-    "@ottochain/sdk": "1.5.0",
+    "@ottochain/sdk": "1.6.0",
     "graphql": "^16.13.1",
     "graphql-ws": "^6.0.7",
     "react": "^19.2.0",
