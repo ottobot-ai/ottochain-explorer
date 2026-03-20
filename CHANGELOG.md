@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.7.1...v0.8.0) (2026-03-20)
+
+
+### Features
+
+* **ci:** auto-merge SDK bump PRs when CI passes ([#114](https://github.com/ottobot-ai/ottochain-explorer/issues/114)) ([0359897](https://github.com/ottobot-ai/ottochain-explorer/commit/035989789ae2b5bc3bfdd560cf289d4e333147b2))
+
 ## [0.7.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.7.0...v0.7.1) (2026-03-18)
 
 
