@@ -7,6 +7,7 @@ import { FiberStateViewer } from './FiberStateViewer';
 import { Pagination, usePagination } from './Pagination';
 // SDK v1.7.0-beta.2: apps/oracles subpath removed; oracle def is in identity app
 import { getIdentityDefinition } from '@ottochain/sdk/apps/identity';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getOracleDefinition = (_type?: string) => getIdentityDefinition('oracle');
 
 const WORKFLOW_TYPES_QUERY = gql`
