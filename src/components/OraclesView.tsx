@@ -5,9 +5,9 @@ import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { FiberStateViewer } from './FiberStateViewer';
 import { Pagination, usePagination } from './Pagination';
-import { 
-  getOracleDefinition
-} from '@ottochain/sdk/apps/oracles';
+// SDK v1.7.0-beta.2: apps/oracles subpath removed; oracle def is in identity app
+import { getIdentityDefinition } from '@ottochain/sdk/apps/identity';
+const getOracleDefinition = (_type?: string) => getIdentityDefinition('oracle');
 
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
