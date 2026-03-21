@@ -6,8 +6,8 @@ import { FiberDetailPage } from './FiberDetailPage';
 import { FiberStateViewer } from './FiberStateViewer';
 import { Pagination, usePagination } from './Pagination';
 import { 
-  getOracleDefinition
-} from '@ottochain/sdk/apps/oracles';
+  getIdentityDefinition
+} from '@ottochain/sdk/apps/identity';
 
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
@@ -156,7 +156,7 @@ export function OraclesView({ initialFiberId, onFiberClick, onAgentClick }: Orac
   const [activeTab, setActiveTab] = useState<'overview' | 'attestations' | 'pending'>('overview');
 
   // Get Oracle state machine definition from SDK
-  const oracleDefinition = getOracleDefinition('Oracle');
+  const oracleDefinition = getIdentityDefinition('oracle');
 
   // Handle external fiber selection
   useEffect(() => {
