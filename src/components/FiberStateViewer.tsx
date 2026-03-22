@@ -1,30 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
-
-interface StateDefinition {
-  name?: string;
-  id?: string;
-  isFinal?: boolean;
-  metadata?: { description?: string } | null;
-  actions?: Array<{
-    eventName: string;
-    target: string;
-    guards?: unknown[];
-  }>;
-}
-
-interface StateMachineDefinition {
-  metadata?: { name?: string; description?: string } | null;
-  initialState: string;
-  states: Record<string, StateDefinition>;
-  transitions?: Array<{
-    eventName: string;
-    from: string;
-    to: string;
-  }>;
-}
+import type { ProtoStateMachineDefinition } from '@ottochain/sdk';
 
 interface FiberStateViewerProps {
-  definition: StateMachineDefinition;
+  definition: ProtoStateMachineDefinition;
   currentState: string;
   className?: string;
   onStateClick?: (stateName: string) => void;
@@ -114,7 +92,7 @@ export function FiberStateViewer({
     
     // Try actions first (old format)
     states.forEach(([fromState, stateDef]) => {
-      (stateDef.actions || []).forEach(action => {
+      ((stateDef as any).actions || []).forEach((action: any) => {
         if (stateNames.includes(action.target)) {
           edgeList.push({
             from: fromState,
@@ -262,7 +240,7 @@ export function FiberStateViewer({
           </div>
         </div>
         <div className="text-xs text-[var(--text-muted)]">
-          {definition.metadata?.name || 'Unnamed'} • {Object.keys(definition.states).length} states
+          {(definition.metadata as any)?.name || 'Unnamed'} • {Object.keys(definition.states).length} states
         </div>
       </div>
 
@@ -418,10 +396,10 @@ export function FiberStateViewer({
                 </text>
 
                 {/* State description tooltip */}
-                {isHovered && stateInfo?.metadata?.description && (
+                {isHovered && (stateInfo as any)?.metadata?.description && (
                   <foreignObject x={0} y={55} width={200} height={60}>
                     <div className="text-xs bg-[var(--bg)] border border-[var(--border)] rounded p-2 shadow-lg">
-                      {stateInfo.metadata.description}
+                      {(stateInfo as any)?.metadata?.description ?? 'No description'}
                     </div>
                   </foreignObject>
                 )}
