@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.8.0...v0.8.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* align explorer with SDK 2.2.5 fiber apps overhaul ([#129](https://github.com/ottobot-ai/ottochain-explorer/issues/129)) ([108dfa5](https://github.com/ottobot-ai/ottochain-explorer/commit/108dfa565781951f78d27c770576de4172447e85))
+
 ## [0.8.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.7.1...v0.8.0) (2026-03-20)
 
 
