@@ -22,7 +22,7 @@ import type { StateMachineDefinition } from '@ottochain/sdk';
 
 /** Agent identity state machine definition */
 export const agentStateMachineDefinition: StateMachineDefinition =
-  getIdentityDefinition('agent') as StateMachineDefinition;
+  getIdentityDefinition('agent') as unknown as StateMachineDefinition;
 
 /**
  * Agreement contract state machine definition.
@@ -30,16 +30,16 @@ export const agentStateMachineDefinition: StateMachineDefinition =
  * that agents encounter in practice.
  */
 export const contractStateMachineDefinition: StateMachineDefinition =
-  getContractDefinition('agreement') as StateMachineDefinition;
+  getContractDefinition('agreement') as unknown as StateMachineDefinition;
 
 /** Universal market state machine definition */
 export const marketStateMachineDefinition: StateMachineDefinition =
-  getMarketDefinition('universal') as StateMachineDefinition;
+  getMarketDefinition('universal') as unknown as StateMachineDefinition;
 
 /** Universal DAO governance state machine definition */
 export const governanceStateMachineDefinition: StateMachineDefinition | null = (() => {
   try {
-    return getGovernanceDefinition('universal') as StateMachineDefinition;
+    return getGovernanceDefinition('universal') as unknown as StateMachineDefinition;
   } catch {
     return null;
   }
@@ -48,7 +48,7 @@ export const governanceStateMachineDefinition: StateMachineDefinition | null = (
 /** DAO state machine definition */
 export const daoStateMachineDefinition: StateMachineDefinition | null = (() => {
   try {
-    return getDAODefinition('single') as StateMachineDefinition;
+    return getDAODefinition('Single') as unknown as StateMachineDefinition;
   } catch {
     return null;
   }

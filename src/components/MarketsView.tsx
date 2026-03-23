@@ -5,7 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { Pagination, usePagination } from './Pagination';
 import { FiberStateViewer } from './FiberStateViewer';
-import { marketStateBadgeClass, fiberStatusBadgeClass, MARKET_STATES } from '../lib/sdk-integration';
+import { marketStateBadgeClass, fiberStatusBadgeClass, MARKET_STATES, getDefinitionByWorkflowType } from '../lib/sdk-integration';
 
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
