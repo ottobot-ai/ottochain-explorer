@@ -6,7 +6,7 @@
  * Pure CSS animations — no WebSocket dependency; the dot loops through states
  * on a staggered interval to convey "things are happening."
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // ─── Workflow Definitions ────────────────────────────────────────────────────
 
