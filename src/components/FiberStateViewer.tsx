@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
-import type { ProtoStateMachineDefinition } from '@ottochain/sdk';
+import type { StateMachineDefinition } from '@ottochain/sdk';
 
 interface FiberStateViewerProps {
-  definition: ProtoStateMachineDefinition;
+  definition: StateMachineDefinition;
   currentState: string;
   className?: string;
   onStateClick?: (stateName: string) => void;
@@ -90,9 +90,9 @@ export function FiberStateViewer({
     // Build edges from actions OR transitions
     const edgeList: Edge[] = [];
     
-    // Try actions first (old format)
+    // Try actions first (old format - stateDef is { [key: string]: any } from SDK)
     states.forEach(([fromState, stateDef]) => {
-      ((stateDef as any).actions || []).forEach((action: any) => {
+      (stateDef?.actions || []).forEach((action: any) => {
         if (stateNames.includes(action.target)) {
           edgeList.push({
             from: fromState,
@@ -240,7 +240,7 @@ export function FiberStateViewer({
           </div>
         </div>
         <div className="text-xs text-[var(--text-muted)]">
-          {(definition.metadata as any)?.name || 'Unnamed'} • {Object.keys(definition.states).length} states
+          {definition.metadata?.name || 'Unnamed'} • {Object.keys(definition.states!).length} states
         </div>
       </div>
 
@@ -336,7 +336,7 @@ export function FiberStateViewer({
             const isCurrent = node.state === currentState;
             const isInitial = node.state === initialStateName;
             const isHovered = hoveredState === node.state;
-            const stateInfo = definition.states[node.state];
+            const stateInfo = definition.states?.[node.state];
 
             return (
               <g
@@ -395,11 +395,11 @@ export function FiberStateViewer({
                   {node.state.length > 14 ? node.state.slice(0, 12) + '...' : node.state}
                 </text>
 
-                {/* State description tooltip */}
-                {isHovered && (stateInfo as any)?.metadata?.description && (
+                {/* State description tooltip - stateInfo is { [key: string]: any } from SDK */}
+                {isHovered && stateInfo?.metadata?.description && (
                   <foreignObject x={0} y={55} width={200} height={60}>
                     <div className="text-xs bg-[var(--bg)] border border-[var(--border)] rounded p-2 shadow-lg">
-                      {(stateInfo as any)?.metadata?.description ?? 'No description'}
+                      {stateInfo?.metadata?.description ?? 'No description'}
                     </div>
                   </foreignObject>
                 )}
