@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client/core';
+import { agentStateHexColor } from '../lib/sdk-integration';
 
 // Query to get interaction data including attestations
 const INTERACTION_GRAPH = gql`
@@ -150,18 +151,8 @@ export function InteractionGraph({ onAgentClick, width = 600, height = 400 }: In
     return { nodes, links };
   }, [data]);
 
-  // Color based on agent state - aligned with SDK AgentState enum
-  const getNodeColor = useCallback((node: GraphNode) => {
-    switch (node.state) {
-      case 'ACTIVE': return '#22c55e';     // green
-      case 'REGISTERED': return '#eab308'; // yellow
-      case 'CHALLENGED': return '#f97316'; // orange
-      case 'PROBATION': return '#a855f7';  // purple
-      case 'SUSPENDED': return '#ef4444';  // red
-      case 'WITHDRAWN': return '#6b7280';  // gray
-      default: return '#9ca3af';           // light gray
-    }
-  }, []);
+  // Color based on agent state — from SDK integration (single source of truth)
+  const getNodeColor = useCallback((node: GraphNode) => agentStateHexColor(node.state), []);
 
   // Link color based on relationship type
   const getLinkColor = useCallback((link: any) => {

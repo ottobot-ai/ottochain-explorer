@@ -5,6 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { Pagination, usePagination } from './Pagination';
 import { FiberStateViewer } from './FiberStateViewer';
+import { marketStateBadgeClass, fiberStatusBadgeClass, MARKET_STATES } from '../lib/sdk-integration';
 
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
@@ -119,21 +120,8 @@ const typeColors: Record<string, string> = {
 
 const getTypeColor = (type: string) => typeColors[type] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 
-// State badge colors
-const stateColors: Record<string, string> = {
-  active: 'bg-green-500/20 text-green-400',
-  completed: 'bg-blue-500/20 text-blue-400',
-  finished: 'bg-blue-500/20 text-blue-400',
-  pending: 'bg-yellow-500/20 text-yellow-400',
-  registered: 'bg-purple-500/20 text-purple-400',
-  setup: 'bg-gray-500/20 text-gray-400',
-  playing: 'bg-green-500/20 text-green-400',
-  cancelled: 'bg-red-500/20 text-red-400',
-  rejected: 'bg-red-500/20 text-red-400',
-  disputed: 'bg-orange-500/20 text-orange-400',
-};
-
-const getStateColor = (state: string) => stateColors[state.toLowerCase()] || 'bg-gray-500/20 text-gray-400';
+// State badge colors from SDK integration (single source of truth)
+const getStateColor = (state: string) => marketStateBadgeClass(state.toUpperCase()) || marketStateBadgeClass(state);
 
 // Market type badges
 const marketTypeColors: Record<string, string> = {
@@ -332,7 +320,11 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
               className="px-3 py-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg text-sm"
             >
               <option value="">All States</option>
-              {selectedType && workflowTypes.find(type => type.name === selectedType)?.states.map(state => (
+              {/* State options: SDK definition is the canonical source; fall back to live workflowTypes data */}
+              {(MARKET_STATES.length > 0
+                ? MARKET_STATES
+                : (workflowTypes.find(type => type.name === selectedType)?.states ?? [])
+              ).map(state => (
                 <option key={state} value={state}>{state}</option>
               ))}
             </select>
@@ -539,7 +531,7 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
                             {String(detail.currentState) || 'Unknown'}
                           </span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            String(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                            fiberStatusBadgeClass(String(detail.status))
                           }`}>
                             {String(detail.status) || 'Unknown'}
                           </span>
@@ -786,13 +778,21 @@ export function MarketsView({ initialFiberId, onFiberClick }: MarketsViewProps =
                           };
                           
                           const safeDefinition = parseJsonSafely(detail.definition);
+
+                          // Fall back to SDK market definition if API didn't return one
+                          const sdkDefinition = (!safeDefinition || !('initialState' in (safeDefinition || {})))
+                            ? getDefinitionByWorkflowType(String(detail.workflowType))
+                            : null;
+                          const effectiveDefinition = (safeDefinition && 'initialState' in safeDefinition)
+                            ? safeDefinition
+                            : sdkDefinition;
                           
                           return (
                             <>
-                              {/* State Machine Visualization */}
-                              {safeDefinition && typeof safeDefinition === 'object' && 'initialState' in safeDefinition && (
+                              {/* State Machine Visualization — uses SDK definition as fallback */}
+                              {effectiveDefinition && typeof effectiveDefinition === 'object' && 'initialState' in effectiveDefinition && (
                                 <FiberStateViewer 
-                                  definition={safeDefinition as any}
+                                  definition={effectiveDefinition as any}
                                   currentState={String(detail.currentState)}
                                   className="max-h-48"
                                 />

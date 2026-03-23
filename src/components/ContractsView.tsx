@@ -4,6 +4,11 @@ import { useQuery } from '@apollo/client/react';
 import { CONTRACTS_LIST, CONTRACT_DETAILS } from '../lib/queries';
 import type { Contract } from '../lib/queries';
 import { CopyAddress } from './CopyAddress';
+import {
+  contractStateBadgeClass,
+  contractStateIcon,
+  CONTRACT_STATES,
+} from '../lib/sdk-integration';
 
 interface ContractsViewProps {
   onAgentClick: (address: string) => void;
@@ -23,29 +28,12 @@ export function ContractsView({ onAgentClick }: ContractsViewProps) {
     skip: !selectedContract,
   });
 
-  const getStateColor = (state: string) => {
-    switch (state) {
-      case 'COMPLETED': return 'bg-[var(--green)] text-white';
-      case 'ACTIVE': return 'bg-[var(--accent)] text-white';
-      case 'PROPOSED': return 'bg-[var(--orange)] text-black';
-      case 'REJECTED': return 'bg-[var(--red)] text-white';
-      case 'DISPUTED': return 'bg-[var(--red)] text-white';
-      default: return 'bg-[var(--text-muted)] text-white';
-    }
-  };
+  // State display helpers are provided by sdk-integration (SDK-derived)
+  const getStateColor = contractStateBadgeClass;
+  const getStateIcon = contractStateIcon;
 
-  const getStateIcon = (state: string) => {
-    switch (state) {
-      case 'COMPLETED': return '✅';
-      case 'ACTIVE': return '🔄';
-      case 'PROPOSED': return '📝';
-      case 'REJECTED': return '❌';
-      case 'DISPUTED': return '⚠️';
-      default: return '📄';
-    }
-  };
-
-  const states = ['PROPOSED', 'ACTIVE', 'COMPLETED', 'REJECTED', 'DISPUTED'];
+  // State list derived from SDK contract state machine definition
+  const states = CONTRACT_STATES;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">

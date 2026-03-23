@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { proposalStatusBadgeClass } from '../lib/sdk-integration';
 
 export interface Proposal {
   id: string;
@@ -25,15 +26,23 @@ export type ProposalStatus =
   | 'FAILED'
   | 'CANCELLED';
 
-const statusStyles: Record<ProposalStatus, { color: string; icon: string }> = {
-  DRAFT: { color: 'bg-gray-500/20 text-gray-400', icon: '📝' },
-  ACTIVE: { color: 'bg-green-500/20 text-green-400', icon: '🗳️' },
-  PENDING: { color: 'bg-yellow-500/20 text-yellow-400', icon: '⏳' },
-  EXECUTED: { color: 'bg-blue-500/20 text-blue-400', icon: '✅' },
-  VETOED: { color: 'bg-red-500/20 text-red-400', icon: '🚫' },
-  FAILED: { color: 'bg-orange-500/20 text-orange-400', icon: '❌' },
-  CANCELLED: { color: 'bg-gray-600/20 text-gray-500', icon: '🗑️' },
+// Proposal icons (SDK provides colors via proposalStatusBadgeClass)
+const statusIcons: Record<ProposalStatus, string> = {
+  DRAFT: '📝',
+  ACTIVE: '🗳️',
+  PENDING: '⏳',
+  EXECUTED: '✅',
+  VETOED: '🚫',
+  FAILED: '❌',
+  CANCELLED: '🗑️',
 };
+
+const statusStyles: Record<ProposalStatus, { color: string; icon: string }> = Object.fromEntries(
+  Object.entries(statusIcons).map(([status, icon]) => [
+    status,
+    { color: proposalStatusBadgeClass(status), icon },
+  ]),
+) as Record<ProposalStatus, { color: string; icon: string }>;
 
 interface ProposalsProps {
   proposals: Proposal[];

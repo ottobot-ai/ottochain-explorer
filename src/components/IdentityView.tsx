@@ -5,6 +5,10 @@ import { useQuery } from '@apollo/client/react';
 import { AgentAvatar } from './AgentAvatar';
 import { Pagination, usePagination } from './Pagination';
 import type { AgentState, FiberStatus } from '../lib/queries';
+import {
+  agentStateBadgeClass,
+  fiberStatusBadgeClass,
+} from '../lib/sdk-integration';
 
 const AGENTS_QUERY = gql`
   query Agents($limit: Int, $orderBy: AgentOrderBy) {
@@ -93,24 +97,14 @@ const platformIcons: Record<string, string> = {
   CUSTOM: '🔗',
 };
 
-// State colors aligned with SDK AgentState enum
-const stateColors: Record<AgentState, string> = {
-  UNSPECIFIED: 'bg-gray-500/20 text-gray-400',
-  REGISTERED: 'bg-yellow-500/20 text-yellow-400',
-  ACTIVE: 'bg-green-500/20 text-green-400',
-  CHALLENGED: 'bg-orange-500/20 text-orange-400',
-  SUSPENDED: 'bg-red-500/20 text-red-400',
-  PROBATION: 'bg-purple-500/20 text-purple-400',
-  WITHDRAWN: 'bg-gray-600/20 text-gray-500',
-};
+// State colors from SDK integration (single source of truth)
+const stateColors: Record<AgentState, string> = new Proxy({} as Record<AgentState, string>, {
+  get: (_target, prop: string) => agentStateBadgeClass(prop),
+});
 
-// Fiber status colors aligned with SDK FiberStatus enum
-const fiberStatusColors: Record<FiberStatus, string> = {
-  UNSPECIFIED: 'bg-gray-500/20 text-gray-400',
-  ACTIVE: 'bg-green-500/20 text-green-400',
-  ARCHIVED: 'bg-blue-500/20 text-blue-400',
-  FAILED: 'bg-red-500/20 text-red-400',
-};
+const fiberStatusColors: Record<FiberStatus, string> = new Proxy({} as Record<FiberStatus, string>, {
+  get: (_target, prop: string) => fiberStatusBadgeClass(prop),
+});
 
 export function IdentityView({ onFiberClick }: IdentityViewProps) {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);

@@ -6,6 +6,11 @@ import { CopyAddress } from './CopyAddress';
 import { AgentAvatar } from './AgentAvatar';
 import { ReputationChart } from './ReputationChart';
 import { Sparkline } from './Sparkline';
+import {
+  agentStateTextClass,
+  contractStateSoftBadgeClass,
+  fiberStatusBadgeClass,
+} from '../lib/sdk-integration';
 
 interface AgentModalProps {
   address: string;
@@ -32,18 +37,8 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
   const completedContracts = allContracts.filter(c => c.state === 'COMPLETED').length;
   const activeContracts = allContracts.filter(c => c.state === 'ACTIVE' || c.state === 'PROPOSED').length;
 
-  // State colors aligned with SDK AgentState enum
-  const getStateColor = (state: string) => {
-    switch (state) {
-      case 'ACTIVE': return 'text-[var(--green)]';
-      case 'REGISTERED': return 'text-yellow-400';
-      case 'CHALLENGED': return 'text-orange-400';
-      case 'SUSPENDED': return 'text-[var(--red)]';
-      case 'PROBATION': return 'text-purple-400';
-      case 'WITHDRAWN': return 'text-gray-500';
-      default: return 'text-[var(--text-muted)]';
-    }
-  };
+  // State display helpers from SDK integration
+  const getStateColor = agentStateTextClass;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -186,11 +181,7 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
                     {allContracts.slice(0, 2).map(contract => (
                       <div key={contract.id} className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border)]">
                         <div className="flex items-center justify-between mb-1">
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            contract.state === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
-                            contract.state === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-gray-500/20 text-gray-400'
-                          }`}>{contract.state}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded ${contractStateSoftBadgeClass(contract.state)}`}>{contract.state}</span>
                           <span className="text-xs text-[var(--text-muted)]">{contract.role}</span>
                         </div>
                         <div className="text-sm font-mono truncate text-[var(--text-muted)]">
@@ -211,13 +202,7 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
                       <div key={contract.id} className="p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)]">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-0.5 rounded ${
-                              contract.state === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
-                              contract.state === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400' :
-                              contract.state === 'PROPOSED' ? 'bg-yellow-500/20 text-yellow-400' :
-                              contract.state === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                              'bg-gray-500/20 text-gray-400'
-                            }`}>{contract.state}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded ${contractStateSoftBadgeClass(contract.state)}`}>{contract.state}</span>
                             <span className="text-xs bg-[var(--bg)] px-2 py-0.5 rounded">{contract.role}</span>
                           </div>
                           <span className="text-xs text-[var(--text-muted)]">
@@ -244,15 +229,6 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
                     <p className="text-[var(--text-muted)] py-4 text-center">No fibers owned</p>
                   ) : (
                     fibers.map(fiber => {
-                      // Fiber status colors aligned with SDK FiberStatus enum
-                      const getStatusColor = (status: string) => {
-                        switch (status) {
-                          case 'ACTIVE': return 'bg-green-500/20 text-green-400';
-                          case 'ARCHIVED': return 'bg-blue-500/20 text-blue-400';
-                          case 'FAILED': return 'bg-red-500/20 text-red-400';
-                          default: return 'bg-gray-500/20 text-gray-400';
-                        }
-                      };
                       return (
                         <button
                           key={fiber.fiberId}
@@ -264,7 +240,7 @@ export function AgentModal({ address, onClose, onFiberClick }: AgentModalProps) 
                               {fiber.workflowType}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(fiber.status)}`}>
+                              <span className={`text-xs px-2 py-0.5 rounded ${fiberStatusBadgeClass(fiber.status)}`}>
                                 {fiber.status}
                               </span>
                               <span className="text-xs text-[var(--text-muted)]">
