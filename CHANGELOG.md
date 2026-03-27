@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.8.1...v0.9.0) (2026-03-27)
+
+
+### Features
+
+* expand @ottochain/sdk usage throughout explorer (issue [#41](https://github.com/ottobot-ai/ottochain-explorer/issues/41)) ([#141](https://github.com/ottobot-ai/ottochain-explorer/issues/141)) ([288ed58](https://github.com/ottobot-ai/ottochain-explorer/commit/288ed58b1a01f17556d22b699f67480f1e861075))
+
 ## [0.8.1](https://github.com/ottobot-ai/ottochain-explorer/compare/v0.8.0...v0.8.1) (2026-03-22)
 
 
