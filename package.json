@@ -15,7 +15,7 @@
   "dependencies": {
     "@apollo/client": "^3.13.5",
     "@dicebear/collection": "^9.4.2",
-    "@dicebear/core": "^9.4.0",
+    "@dicebear/core": "^9.4.2",
     "@ottochain/sdk": "2.2.5",
     "graphql": "^16.13.1",
     "graphql-ws": "^6.0.7",
