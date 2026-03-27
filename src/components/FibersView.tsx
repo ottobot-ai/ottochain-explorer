@@ -5,6 +5,13 @@ import { useQuery } from '@apollo/client/react';
 import { FiberDetailPage } from './FiberDetailPage';
 import { Pagination, usePagination } from './Pagination';
 import { FiberStateViewer } from './FiberStateViewer';
+import {
+  fiberStatusBadgeClass,
+  getDefinitionByWorkflowType,
+  agentStateBadgeClass,
+  contractStateBadgeClass,
+  marketStateBadgeClass,
+} from '../lib/sdk-integration';
 
 const WORKFLOW_TYPES_QUERY = gql`
   query WorkflowTypes {
@@ -117,21 +124,28 @@ const typeColors: Record<string, string> = {
 
 const getTypeColor = (type: string) => typeColors[type] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 
-// State badge colors
-const stateColors: Record<string, string> = {
-  active: 'bg-green-500/20 text-green-400',
-  completed: 'bg-blue-500/20 text-blue-400',
-  finished: 'bg-blue-500/20 text-blue-400',
-  pending: 'bg-yellow-500/20 text-yellow-400',
-  registered: 'bg-purple-500/20 text-purple-400',
-  setup: 'bg-gray-500/20 text-gray-400',
-  playing: 'bg-green-500/20 text-green-400',
-  cancelled: 'bg-red-500/20 text-red-400',
-  rejected: 'bg-red-500/20 text-red-400',
-  disputed: 'bg-orange-500/20 text-orange-400',
+/**
+ * State badge color for a fiber's currentState value.
+ * Routes to the SDK-appropriate helper based on the uppercase state string.
+ * Falls back gracefully for custom/unknown workflow types.
+ */
+const getStateColor = (state: string, workflowType?: string): string => {
+  const upper = state.toUpperCase();
+  // Try routing to app-specific helper based on workflowType
+  if (workflowType) {
+    const t = workflowType.toLowerCase();
+    if (t.includes('identity') || t.includes('agent')) return agentStateBadgeClass(upper);
+    if (t.includes('contract')) return contractStateBadgeClass(upper);
+    if (t.includes('market')) return marketStateBadgeClass(upper);
+  }
+  // Generic fallback: try each app's helper and return first non-default hit
+  const fallbacks = [agentStateBadgeClass, contractStateBadgeClass, marketStateBadgeClass];
+  for (const fn of fallbacks) {
+    const cls = fn(upper);
+    if (cls !== 'bg-gray-500/20 text-gray-400') return cls;
+  }
+  return 'bg-gray-500/20 text-gray-400';
 };
-
-const getStateColor = (state: string) => stateColors[state.toLowerCase()] || 'bg-gray-500/20 text-gray-400';
 
 interface FibersViewProps {
   initialFiberId?: string | null;
@@ -359,7 +373,7 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(String(fiber.workflowType))}`}>
                           {String(fiber.workflowType)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(String(fiber.currentState))}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(String(fiber.currentState), String(fiber.workflowType))}`}>
                           {String(fiber.currentState)}
                         </span>
                       </div>
@@ -420,12 +434,10 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                           <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeColor(String(detail.workflowType) || 'Unknown')}`}>
                             {String(detail.workflowType) || 'Unknown'}
                           </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(String(detail.currentState) || 'unknown')}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(String(detail.currentState) || 'unknown', String(detail.workflowType))}`}>
                             {String(detail.currentState) || 'Unknown'}
                           </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            String(detail.status) === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                          }`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${fiberStatusBadgeClass(String(detail.status))}`}>
                             {String(detail.status) || 'Unknown'}
                           </span>
                         </div>
@@ -494,13 +506,21 @@ export function FibersView({ initialFiberId }: FibersViewProps = {}) {
                   };
                   
                   const safeDefinition = parseJsonSafely(detail.definition);
+
+                  // Fall back to SDK definition if the API didn't return one
+                  const sdkDefinition = (!safeDefinition || !('initialState' in (safeDefinition || {})))
+                    ? getDefinitionByWorkflowType(String(detail.workflowType))
+                    : null;
+                  const effectiveDefinition = (safeDefinition && 'initialState' in safeDefinition)
+                    ? safeDefinition
+                    : sdkDefinition;
                   
                   return (
                     <>
                       {/* State Machine Visualization */}
-                      {safeDefinition && typeof safeDefinition === 'object' && 'initialState' in safeDefinition && (
+                      {effectiveDefinition && typeof effectiveDefinition === 'object' && 'initialState' in effectiveDefinition && (
                         <FiberStateViewer 
-                          definition={safeDefinition as any}
+                          definition={effectiveDefinition as any}
                           currentState={String(detail.currentState)}
                           className="max-h-48"
                         />

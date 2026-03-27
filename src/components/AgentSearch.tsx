@@ -5,6 +5,7 @@ import type { Agent, PlatformLink, Attestation } from '../lib/queries';
 import { CopyAddress } from './CopyAddress';
 import { AgentAvatar } from './AgentAvatar';
 import { ReputationChart } from './ReputationChart';
+import { agentStateDotClass } from '../lib/sdk-integration';
 
 interface AgentSearchProps {
   initialSelectedAgent?: string | null;
@@ -44,18 +45,8 @@ export function AgentSearch({ initialSelectedAgent }: AgentSearchProps) {
 
   const agents = activeSearch && searchResults ? searchResults.searchAgents : allAgents?.agents;
 
-  // State colors aligned with SDK AgentState enum
-  const getStateColor = (state: Agent['state']) => {
-    switch (state) {
-      case 'ACTIVE': return 'bg-[var(--green)]';
-      case 'REGISTERED': return 'bg-yellow-500';
-      case 'CHALLENGED': return 'bg-orange-500';
-      case 'PROBATION': return 'bg-purple-500';
-      case 'SUSPENDED': return 'bg-[var(--red)]';
-      case 'WITHDRAWN': return 'bg-gray-600';
-      default: return 'bg-[var(--text-muted)]';
-    }
-  };
+  // State dot class from SDK integration (single source of truth)
+  const getStateColor = agentStateDotClass;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
