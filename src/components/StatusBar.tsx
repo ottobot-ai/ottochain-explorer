@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import { CLUSTER_STATS } from '../lib/queries';
 import type { ClusterStats } from '../lib/queries';
+import { StateMachineViz } from './StateMachineViz';
 
 interface StatusBarProps {
   snapshotOrdinal: number | null;
@@ -21,10 +22,11 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
   const epoch = cluster?.epoch ?? Math.floor((snapshotOrdinal || 0) / 100);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-[var(--border)] py-2 px-6 z-40">
-      <div className="container mx-auto flex items-center justify-between text-xs">
-        <div className="flex items-center gap-6">
-          {/* Node status */}
+    <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-[var(--border)] py-1.5 px-6 z-40">
+      <div className="container mx-auto flex items-center justify-between text-xs gap-4">
+
+        {/* Left: node status */}
+        <div className="flex items-center gap-4 flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${gl0Nodes > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -44,9 +46,15 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        {/* Centre: animated state machine tracks (hidden on small screens) */}
+        <div className="hidden lg:flex items-center gap-2 flex-1 justify-center overflow-hidden">
+          <StateMachineViz tickMs={1800} />
+        </div>
+
+        {/* Right: keyboard hints + block/tps/epoch */}
+        <div className="flex items-center gap-6 flex-shrink-0">
           {/* Keyboard hints */}
-          <div className="flex items-center gap-2 text-[var(--text-muted)] opacity-60">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] opacity-60 hidden sm:flex">
             <kbd className="px-1.5 py-0.5 bg-[var(--bg-elevated)] rounded text-[10px] font-mono">⌘K</kbd>
             <span>search</span>
             <span className="mx-1">·</span>
@@ -57,7 +65,7 @@ export function StatusBar({ snapshotOrdinal }: StatusBarProps) {
             <span>refresh</span>
           </div>
           
-          <div className="w-px h-4 bg-[var(--border)]" />
+          <div className="w-px h-4 bg-[var(--border)] hidden sm:block" />
           
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)]">Block</span>
